@@ -2,6 +2,7 @@
 {.pragma: http_l, cdecl, dynlib: "./deps/http-parser/libhttp_parser.so", importc: "http_$1".}
 
 from os import nil
+import unsigned
 
 type
   DataCb = proc (a2: ref Parser; at: cstring; length: int): int8 {.cdecl.}
@@ -77,22 +78,21 @@ type
     port       : uint16
     field_data : array[MAX, FieldData]
 
-# Shift bits
-proc kind    (parser: ref Parser): uint8 = (parser.type_flags.int and 0x03).uint8
-proc flags   (parser: ref Parser): uint8 = (parser.type_flags.int shr 2).uint8
-proc err_no  (parser: ref Parser): uint8 = (parser.err_no_upgrade.int and 0x7F).uint8
-proc upgrade (parser: ref Parser): uint8 = (parser.err_no_upgrade.int shr 1).uint8
+# Parser Methods
+proc init* (parser: ref Parser, kind: ParserType) {.http_l, importc: "http_parser_init".}
+proc execute* (parser: ref Parser, settings: ref ParserSettings, data: cstring, size: int): int {.http_l, importc: "http_parser_execute".}
+proc should_keep_alive* (parser: ref Parser): int {.http_l.}
+proc parser_pause* (parser: ref Parser; paused: int) {.http_l.}
+proc body_is_final* (parser: ref Parser): int {.http_l.}
+proc kind* (parser: ref Parser): uint8 = parser.type_flags and 0x03
+proc flags* (parser: ref Parser): uint8 = parser.type_flags shr 2
+proc err_no* (parser: ref Parser): uint8 = parser.err_no_upgrade and 0x7F
+proc upgrade* (parser: ref Parser): uint8 = parser.err_no_upgrade shr 1
 
-# Methods
-proc init (parser: ref Parser, kind: ParserType) {.http_l, importc: "http_parser_init".}
-proc execute (parser: ref Parser, settings: ref ParserSettings, data: cstring, size: int): int {.http_l, importc: "http_parser_execute".}
-# proc should_keep_alive (parser: ref Parser): int {.http_l.}
-proc method_str (m: uint8): cstring {.http_l.}
-proc errno_name (err: uint8): cstring {.http_l.}
-proc errno_description (err: uint8): cstring {.http_l.}
-# proc parser_parse_url (buf: cstring; buflen: int; is_connect: int; u: ref ParserUrl): int {.http_l.}
-# proc parser_pause (parser: ref Parser; paused: int) {.http_l.}
-# proc body_is_final (parser: ref Parser): int {.http_l.}
+proc parser_parse_url* (buf: cstring; buflen: int; is_connect: int; u: ref ParserUrl): int {.http_l.}
+proc method_str* (m: uint8): cstring {.http_l.}
+proc errno_name* (err: uint8): cstring {.http_l.}
+proc errno_description* (err: uint8): cstring {.http_l.}
 
 template debug(args: varargs[string, `$`]) =
   if os.get_env("DEBUG") != "":
