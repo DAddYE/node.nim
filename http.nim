@@ -32,6 +32,7 @@ type
     err_name* : string
     err_desc* : string
     body*     : string
+    last_header_was_value : bool
 
   PRequest = ref Request
   Request* = object of Any
@@ -42,7 +43,7 @@ type
     complete*   : bool
 
   Parser = object
-    type_flags     : uint8 # type bit-field 2 and flags bit-field 6
+    type_flags     : uint8 # bit-field 2 and flags bit-field 6
     state          : uint8
     header_state   : uint8
     index          : uint8
@@ -52,7 +53,7 @@ type
     http_minor     : uint16
     status_code    : uint16
     meth           : uint8
-    err_no_upgrade : uint8
+    err_no_upgrade : uint8 # bit-field err 7, upgrade 1
     data           : ref Any
 
   ParserSettings = object
@@ -118,8 +119,8 @@ proc parse_request* (body: cstring): ref Request =
 
   settings.on_url = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
     var req = PRequest(p.data)
-    let url = $at
-    req.url = url[0..length - 1]
+    req.url = $at
+    req.url.setLen(length)
     req.meth = $method_str(p.meth)
     debug "-> got url: '", req.url, "', '", req.meth, "'"
     return 0
@@ -127,25 +128,28 @@ proc parse_request* (body: cstring): ref Request =
   settings.on_header_field = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
     var req  = PRequest(p.data)
     var field = $(at)
-    field = field[0..length - 1]
-    field = $field
+    field.setLen(length)
     var header: Header
-    header.name = field
-    req.headers.insert header
+    if req.headers.len > 0 and not req.last_header_was_value:
+      req.headers[req.headers.len - 1].name.add(field)
+    else:
+      header.name = field
+      req.headers.insert header
+    req.last_header_was_value = false
     debug "-> got header field: '", field, "'"
     return 0
 
   settings.on_header_value = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
     var req   = PRequest(p.data)
     var field = $(at)
-    field = field[0..length - 1]
-    field = $field
+    field.setLen(length)
     if req.headers.len == 0:
       var header: Header
       header.value = field
       req.headers.insert header
     else:
       req.headers[0].value = field
+    req.last_header_was_value = true
     debug "-> got header value: '", field, "'"
     return 0
 
@@ -163,7 +167,8 @@ proc parse_request* (body: cstring): ref Request =
   settings.on_body = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
     var req  = PRequest(p.data)
     var body = $at
-    req.body = body[0..length]
+    body.setLen(length)
+    if req.body.isNil(): req.body = body else: req.body.add(body)
     debug "-> got the body '", body, "'"
     return 0
 
@@ -176,8 +181,6 @@ proc parse_request* (body: cstring): ref Request =
     debug "-- message complete: '", req.err_no, "', '",
               req.err_name, "', '", req.err_desc, "'"
     return 0
-
-  # TODO: implement partial readers
 
   parser.data = request
   parser.init(HTTP_REQUEST)

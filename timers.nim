@@ -1,16 +1,20 @@
 import uv
 
+type
+  PTimer = ref uv.TTimer
+  CTimer = proc () # TODO: implement varargs
+
 proc check_err (err: int) =
-  assert err == 0, "Response was: " & $TErrCode(err)
+  assert err == 0, "Response was: " & $uv.TErrCode(err)
 
-template set_timer (delay: uint64, repeat: uint64, timer: var TTimer, callback: proc ()) =
-  check_err timer_init(Loop, addr timer)
-  var cb = proc (handle: ptr TTimer; status: cint){.cdecl.} = callback()
-  check_err timer_start(addr timer, cb, delay, repeat)
+template set_timer (delay, repeat: uint64, timer: PTimer, callback: CTimer, args: varargs[expr]) =
+  check_err timer_init(default_loop(), timer)
+  var cb = proc (handle: ref TTimer; status: int){.cdecl.} = callback()
+  check_err timer_start(timer, cb, delay, repeat)
 
-template set_timer (delay: uint64, repeat: uint64, callback: proc ()) =
-  var t: TTimer
-  set_timer(delay, repeat, t, callback)
+template set_timer (delay, repeat: uint64, callback: CTimer, args: varargs[expr]) =
+  var t: PTimer; t.new
+  set_timer(delay, repeat, t, callback, args)
 
 ##
 # To schedule execution of a one-time `callback` after `delay` milliseconds. Returns a
@@ -21,39 +25,44 @@ template set_timer (delay: uint64, repeat: uint64, callback: proc ()) =
 # the callback will fire, nor of the ordering things will fire in. The callback will
 # be called as close as possible to the time specified.
 #
-template set_timeout* (delay: uint64, timer: var TTimer, callback: proc ()) =
-  set_timer(delay, 0, timer, callback)
+template set_timeout* (delay: uint64, timer: PTimer, callback: CTimer, args: varargs[expr]) =
+  set_timer(delay, 0, timer, callback, args)
 
 ##
 # set_timeout(delay, callback)
 #
-template set_timeout* (delay: uint64, callback: proc ()) =
-  set_timer(delay, 0, callback)
+template set_timeout* (delay: uint64, callback: CTimer, args: varargs[expr]) =
+  set_timer(delay, 0, callback, args)
 
 ##
 # Prevents a timeout from triggering.
 #
-proc clear_timeout* (timer: var TTimer) =
-  check_err timer_stop(addr timer)
+proc clear_timeout* (timer: PTimer) =
+  check_err timer_stop(timer)
 
 ##
 # To schedule the repeated execution of `callback` every `delay` milliseconds.
 # Returns a `var TTimer` for possible use with `clear_interval()`.
 #
-template set_interval* (interval: uint64, timer: var TTimer, callback: proc ()) =
-  set_timer(interval, interval, timer, callback)
+template set_interval* (interval: uint64, timer: PTimer, callback: CTimer, args: varargs[expr]) =
+  set_timer(interval, interval, timer, callback, args)
 
 ##
 # set_interval(delay, callback)
 #
-template set_interval* (interval: uint64, callback: proc ()) =
-  set_timer(interval, interval, callback)
+template set_interval* (interval: uint64, callback: CTimer, args: varargs[expr]) =
+  set_timer(interval, interval, callback, args)
 
 ##
 # Stops a interval from triggering.
 #
-proc clear_interval* (timer: var TTimer) =
+proc clear_interval* (timer: PTimer) =
   clear_timeout(timer)
+
+## TODO: high
+#
+# * Find a way to support varargs[expr]
+#
 
 ## TODO: medium
 
@@ -90,14 +99,14 @@ proc clear_interval* (timer: var TTimer) =
 
 # Stops an immediate from triggering.
 
-
 when isMainModule:
-  var Loop = default_loop()
-
-  var t: TTimer
+  var t: PTimer; t.new
   set_interval 1000, t:
     echo "Interval every 1s with t"
 
+  # set_interval(100, t, "a", "b") do (a, b):
+  #   echo a, b
+  # # or:
   # var cb = proc (a: string, b: string) =
   #   echo "Hello ", a, b
   # set_timeout 1000, cb, "Sten", " Smith"
@@ -107,4 +116,4 @@ when isMainModule:
     clear_timeout(t)
 
   echo "Running LibUV ", version_string()
-  check_err run(Loop, RUN_DEFAULT)
+  check_err run(default_loop(), RUN_DEFAULT)
