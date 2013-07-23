@@ -97,14 +97,18 @@ type
     handle*       : ref TStream
     cb*           : TShutdownCb
 
-  TStream* {.inheritable} = object
-    close_cb*              : TCloseCb
-    data*                  : pointer
-    loop*                  : ref TLoop
-    ttype*                 : THandleType
-    handle_queue*          : array[2, pointer]
-    flags*                 : int
-    next_closing*          : ref THandle
+
+  THandle* {.inheritable.} = object
+    close_cb*     : TCloseCb
+    data*         : pointer
+    loop*         : ref TLoop
+    ttype*        : THandleType
+    handle_queue* : array[2, pointer]
+    flags*        : int
+    next_closing* : ref THandle
+
+
+  TStream* {.inheritable} = object of THandle
     write_queue_size*      : int
     alloc_cb*              : TAllocCb
     read_cb*               : TReadCb
@@ -118,15 +122,6 @@ type
     delayed_error*         : int
     accepted_fd*           : int
     select*                : pointer
-
-  THandle* {.inheritable.} = object
-    close_cb*     : TCloseCb
-    data*         : pointer
-    loop*         : ref TLoop
-    ttype*        : THandleType
-    handle_queue* : array[2, pointer]
-    flags*        : int
-    next_closing* : ref THandle
 
   TPipe* = object of TStream
     ipc*        : int
@@ -527,7 +522,7 @@ proc req_size* (ttype: TReqType): int {.libuv.}
 proc is_active* (handle: ref THandle): int {.libuv.}
 proc walk* (loop: ref TLoop; walk_cb: TWalkCb; arg: pointer) {.libuv.}
 proc close* (handle: ref THandle; close_cb: TCloseCb) {.libuv.}
-proc buf_init* (base: cstring; len: uint8): TBuf {.libuv.}
+proc buf_init* (base: cstring; len: uint): TBuf {.libuv.}
 proc strlcpy* (dst: cstring; src: cstring; size: int): int {.libuv.}
 proc strlcat* (dst: cstring; src: cstring; size: int): int {.libuv.}
 proc listen* (stream: ref TStream; backlog: int; cb: TConnectionCb): int {.libuv.}
@@ -698,6 +693,10 @@ proc thread_join* (tid: ref TThread): int {.libuv.}
 
 proc check* (err: int) =
   assert err == 0, "Response was: " & $TErrCode(err)
+
+proc run_default_loop* () =
+  var err = run(default_loop(), RUN_DEFAULT)
+  check err
 
 when isMainModule:
   # Raw test:
