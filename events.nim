@@ -5,20 +5,20 @@ type
   EventArgs*     = object of TObject ## Base object for event arguments that are passed to callback functions.
   EventCallback  = proc(e: EventArgs){.closure.}
   EventListener* = tuple[name: string, listeners: seq[EventCallback]] ## An eventlistener for an event.
-  EventEmitter*  = object {.pure, final.} ## An object that fires events and holds event listeners for an object.
+  EventEmitter*  = ref object {.pure, final.} ## An object that fires events and holds event listeners for an object.
     s: seq[EventListener]
-  EInvalidEvent* = object of EInvalidValue
 
 proc initEventEmitter* (): EventEmitter =
   ## Creates and returns a new EventEmitter.
+  result.new
   result.s = @[]
 
-proc getEventListener (emitter: var EventEmitter, event: string): int =
+proc getEventListener (emitter: EventEmitter, event: string): int =
   for i in 0..high(emitter.s):
     if emitter.s[i].name == event: return i
   return -1
 
-proc removeAllListeners* (emitter: var EventEmitter, event = "") =
+proc removeAllListeners* (emitter: EventEmitter, event = "") =
   ## Clears all of the callbacks from the event listener.
   if event.len > 0:
     var i = emitter.getEventListener(event)
@@ -26,7 +26,7 @@ proc removeAllListeners* (emitter: var EventEmitter, event = "") =
   else:
     emitter.s.setLen(0)
 
-proc removeListener* (emitter: var EventEmitter, event: string, func: EventCallback) =
+proc removeListener* (emitter: EventEmitter, event: string, func: EventCallback) =
   ## Removes the callback from the specified event listener.
   var x = emitter.getEventListener(event)
   if x < 0: return
@@ -37,7 +37,7 @@ proc removeListener* (emitter: var EventEmitter, event: string, func: EventCallb
       if emitter.s[x].listeners.len == 0: emitter.s.delete(x)
       break
 
-proc getOrInitEventListener (emitter: var EventEmitter, event: string): int =
+proc getOrInitEventListener (emitter: EventEmitter, event: string): int =
   ## Get or Initializes an Eventlistener with the specified name and returns it.
   result = getEventListener(emitter, event)
   if result < 0:
@@ -46,21 +46,21 @@ proc getOrInitEventListener (emitter: var EventEmitter, event: string): int =
     emitter.s.add(listener)
     result = high(emitter.s)
 
-proc on* (emitter: var EventEmitter, event: string, func: EventCallback) =
+proc on* (emitter: EventEmitter, event: string, func: EventCallback) =
   ## Assigns a event listener with the specified callback. If the event
   ## doesn't exist, it will be created.
   var i = getOrInitEventListener(emitter, event)
   emitter.s[i].listeners.add(func)
 
-proc addListener* (emitter: var EventEmitter, event: string, func: EventCallback) =
+proc addListener* (emitter: EventEmitter, event: string, func: EventCallback) =
   on(emitter, event, func)
 
-proc emit* (emitter: var EventEmitter, event: string, args: EventArgs) =
+proc emit* (emitter: EventEmitter, event: string, args: EventArgs) =
   ## Fires an event listener with specified event arguments.
   var i = getOrInitEventListener(emitter, event)
   for func in items(emitter.s[i].listeners): func(args)
 
-proc len* (emitter: var EventEmitter): int =
+proc len* (emitter: EventEmitter): int =
   ## Get the len of registered listeners
   emitter.s.len
 

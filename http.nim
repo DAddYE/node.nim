@@ -114,80 +114,101 @@ proc init_request* (): ref Request =
   req.parser.init(HTTP_REQUEST)
   req.complete = false
   req.events = initEventEmitter()
+  req.headers = @[]
 
-  req.settings.on_message_begin = proc (p: ref Parser): int8 {.cdecl.} =
-    debug "-- message begin"
-    p.data.to_request.headers = @[]
-    return 0
+  # req.settings.on_message_begin = proc (p: ref Parser): int8 {.cdecl.} =
+  #   debug "-- message begin"
+  #   return 0
 
   req.settings.on_url = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
-    var req = p.data.to_request
-    req.url = $at
-    req.url.setLen(length)
-    req.meth = $method_str(p.meth)
-    debug "-> got url: '", req.url, "', '", req.meth, "'"
+    withoutGC do:
+      var req = p.data.to_request
+      req.url = $at
+      req.url.setLen(length)
+      req.meth = $method_str(p.meth)
+      debug "-> got url: '", req.url, "', '", req.meth, "'"
     return 0
 
   req.settings.on_header_field = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
-    var req  = p.data.to_request
-    var field = $(at)
-    field.setLen(length)
-    var header: Header
-    if req.headers.len > 0 and not req.last_header_was_value:
-      req.headers[req.headers.len - 1].name.add(field)
-    else:
-      header.name = field
-      req.headers.insert header
-    req.last_header_was_value = false
-    debug "-> got header field: '", field, "'"
+    withoutGC do:
+      var req  = p.data.to_request
+      var field = $at
+      field.setLen(length)
+      var header: Header
+      if req.headers.len > 0 and not req.last_header_was_value:
+        req.headers[req.headers.high].name.add(field)
+      else:
+        header.name = field
+        req.headers.add header
+      req.last_header_was_value = false
+      debug "-> got header field: '", field, "'"
     return 0
 
   req.settings.on_header_value = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
-    var req   = p.data.to_request
-    var field = $(at)
-    field.setLen(length)
-    if req.headers.len == 0:
-      var header: Header
-      header.value = field
-      req.headers.insert header
-    else:
-      req.headers[0].value = field
-    req.last_header_was_value = true
-    debug "-> got header value: '", field, "'"
+    withoutGC do:
+      var req   = p.data.to_request
+      var field = $at
+      field.setLen(length)
+      if req.headers.len == 0:
+        var header: Header
+        header.value = field
+        req.headers.add header
+      else:
+        req.headers[req.headers.high].value = field
+      req.last_header_was_value = true
+      debug "-> got header value: '", field, "'"
     return 0
 
   req.settings.on_headers_complete = proc (p: ref Parser): int8 {.cdecl.} =
-    var req = p.data.to_request
-    req.http_major = p.http_major
-    req.http_minor = p.http_minor
-    req.events.emit "headers", EventArg(request: req)
-    debug "-> got header complete HTTP/", req.http_major, ".", req.http_minor
+    withoutGC do:
+      var req = p.data.to_request
+      req.http_major = p.http_major
+      req.http_minor = p.http_minor
+      req.events.emit "headers", EventArg(request: req)
+      debug "-> got header complete HTTP/", req.http_major, ".", req.http_minor
     return 0
 
-  req.settings.on_status_complete = proc (p: ref Parser): int8 {.cdecl.} =
-    debug "-> got status complete"
-    return 0
+  # req.settings.on_status_complete = proc (p: ref Parser): int8 {.cdecl.} =
+  #   withoutGC do:
+  #     debug "-> got status complete"
+  #     return 0
 
   req.settings.on_body = proc (p: ref Parser, at: cstring, length: csize): int8 {.cdecl.} =
-    var req  = p.data.to_request
-    var body = $at
-    body.setLen(length)
-    if req.body.isNil(): req.body = body else: req.body.add(body)
-    debug "-> got the body '", body, "'"
+    withoutGC do:
+      var req  = p.data.to_request
+      var body = $at
+      body.setLen(length)
+      if req.body.isNil(): req.body = body else: req.body.add(body)
+      debug "-> got the body '", body, "'"
     return 0
 
   req.settings.on_message_complete = proc (p: ref Parser): int8 {.cdecl.} =
-    var req      = p.data.to_request
-    req.err_no   = p.err_no
-    req.err_name = $err_no_name(p.err_no)
-    req.err_desc = $err_no_description(p.err_no)
-    req.complete = true
-    req.events.emit "message", EventArg(request: req)
-    debug "-- message complete: '", req.err_no, "', '",
-              req.err_name, "', '", req.err_desc, "'"
+    withoutGC do:
+      var req      = p.data.to_request
+      req.err_no   = p.err_no
+      req.err_name = $err_no_name(p.err_no)
+      req.err_desc = $err_no_description(p.err_no)
+      req.complete = true
+      req.events.emit "message", EventArg(request: req)
+      debug "-- message complete: '", req.err_no, "', '",
+                req.err_name, "', '", req.err_desc, "'"
     return 0
 
   return req
 
 proc parse* (req: ref Request, body: cstring, len: int=0): int =
   req.parser.execute(req.settings, body, (if len > 0: len else: body.len))
+
+if isMainModule:
+  block:
+    # see test/http_test.nim
+    var req = http.init_request()
+    for i in 0..5_000:
+      var test = "GET http://www.google.com HTTP/2.5\r\n" &
+                "Host: localhost\r\n" &
+                "Accept: /\r\n" &
+                "Connection: Keep-Alive\r\n" &
+                "Content-Length: 11\r\n" & 
+                "\r\nHello World"
+      var resp = http.parse(req, test)
+      assert resp == test.len
