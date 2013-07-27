@@ -44,14 +44,12 @@ proc on (c: Client, event: string, func: proc (req: ref Request)) =
 
 proc onAlloc (handle: ref Handle, suggestedSize: int): Buf {.cdecl.} =
   debug "-> request buffer of size: ", suggestedSize
-  # var s = ""; s.setLen(suggestedSize)
   result.base = cast[cstring](alloc(suggestedSize))
   result.len = suggestedSize
 
 proc onClose (handle: ref Handle){.cdecl.} =
-  debug "-- Connection closed"
+  debug "-- Connection closed, occupied mem: ", getOccupiedMem()
   # dealloc cast[pointer](handle) # do I really need that?
-  echo getOccupiedMem()
 
 proc onWrite (req: ref Write, status: int) {.cdecl.} =
   debug "-> got onWrite"
@@ -112,5 +110,4 @@ when isMainModule:
       echo "mmm2"
     s.listen(3000)
     echo "Listening on http://localhost:3000"
-    var err = loop.run(RUN_DEFAULT)
-    check err
+    if loop.run(RUN_DEFAULT) > 0: raiseError()
