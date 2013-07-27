@@ -16,36 +16,44 @@ const LIBUV =
   else:                  "./deps/libuv/libuv.so"
 
 type
-  TBuf* = object
+  AddrInfo    = TAddrinfo
+  Sockaddr    = TSockaddr
+  SockaddrIn  = TSockaddrIn
+  SockaddrIn6 = TSockaddrIn6
+  Mode = TMode
+  Off  = TOff
+  Stat = TStat
+
+  Buf* = object
     base* : cstring
     len* : int
 
-  TFile*    = int
-  TOsSock*  = int
-  TOnce*    = object
-  TThread*  = object
-  TMutex*   = object
-  TRwlock*  = object
-  TSem*     = object
-  TCond*    = object
+  File*    = int
+  OsSock*  = int
+  Once*    = object
+  Thread*  = object
+  Mutex*   = object
+  Rwlock*  = object
+  Sem*     = object
+  Cond*    = object
 
-  TBarrier* = object
+  Barrier* = object
     n*          : uint8
     count*      : uint8
-    mutex*      : TMutex
-    turnstile1* : TSem
-    turnstile2* : TSem
+    mutex*      : Mutex
+    turnstile1* : Sem
+    turnstile2* : Sem
 
-  TGid* = object
-  TUid* = object
+  Gid* = object
+  Uid* = object
 
-  TLib* = object
+  Lib* = object
     handle* : pointer
     errmsg* : cstring
 
-  TIoCb = proc (loop: ref TLoop; w: ref TIo; events: uint8) {.cdecl.}
-  TIo = object
-    cb            : TIoCb
+  IoCb = proc (loop: ref Loop; w: ref Io; events: uint8) {.cdecl.}
+  Io = object
+    cb            : IoCb
     pending_queue : array[2, pointer]
     watcher_queue : array[2, pointer]
     pevents       : uint8
@@ -54,21 +62,21 @@ type
     rcount        : int
     wcount        : int
 
-  TPoll* = object
-    close_cb*     : TCloseCb
+  Poll* = object
+    close_cb*     : CloseCb
     data*         : pointer
-    loop*         : ref TLoop
-    ttype*        : THandleType
+    loop*         : ref Loop
+    ttype*        : HandleType
     handle_queue* : array[2, pointer]
     flags*        : int
-    next_closing* : ref THandle
-    poll_cb*      : TPollCb
-    io_watcher*   : TIo
+    next_closing* : ref Handle
+    poll_cb*      : PollCb
+    io_watcher*   : Io
 
-  TPollEvent* = enum
+  PollEvent* {.pure.} = enum
     READABLE = 1, WRITABLE = 2
 
-  TErrCode* {.size: sizeof(int).} = enum
+  ErrCode* = enum
     UNKNOWN = - 1, OK = 0, EOF = 1, EADDRINFO = 2, EACCES = 3, EAGAIN = 4, EADDRINUSE = 5,
     EADDRNOTAVAIL = 6, EAFNOSUPPORT = 7, EALREADY = 8, EBADF = 9, EBUSY = 10, ECONNABORTED = 11,
     ECONNREFUSED = 12, ECONNRESET = 13, EDESTADDRREQ = 14, EFAULT = 15, EHOSTUNREACH = 16,
@@ -80,297 +88,297 @@ type
     ESRCH = 48, ENAMETOOLONG = 49, EPERM = 50, ELOOP = 51, EXDEV = 52, ENOTEMPTY = 53, ENOSPC = 54,
     EIO = 55, EROFS = 56, ENODEV = 57, ESPIPE = 58, ECANCELED = 59, MAX_ERRORS
 
-  THandleType* {.size: sizeof(int).} = enum
+  HandleType* {.pure.} = enum
     UNKNOWN_HANDLE = 0, ASYNC, UCHECK, FS_EVENT, FS_POLL, HANDLE, IDLE, NAMED_PIPE, POLL, PREPARE,
     PROCESS, STREAM, TCP, TIMER, TTY, UDP, SIGNAL, FILE, HANDLE_TYPE_MAX
 
-  TReqType* {.size: sizeof(int), pure.} = enum
+  ReqType* {.pure.} = enum
     UNKNOWN_REQ = 0, REQ, CONNECT, WRITE, SHUTDOWN, UDP_SEND, FS, WORK, GETADDRINFO, REQ_TYPE_MAX
 
-  TRunMode* {.size: sizeof(int).} = enum
+  RunMode*  = enum
     RUN_DEFAULT = 0, RUN_ONCE, RUN_NOWAIT
 
-  TShutdown* = object
+  Shutdown* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    handle*       : ref TStream
-    cb*           : TShutdownCb
+    handle*       : ref Stream
+    cb*           : ShutdownCb
 
 
-  THandle* {.inheritable.} = object
-    close_cb*     : TCloseCb
+  Handle* {.inheritable.} = object
+    close_cb*     : CloseCb
     data*         : pointer
-    loop*         : ref TLoop
-    ttype*        : THandleType
+    loop*         : ref Loop
+    ttype*        : HandleType
     handle_queue* : array[2, pointer]
     flags*        : int
-    next_closing* : ref THandle
+    next_closing* : ref Handle
 
 
-  TStream* {.inheritable} = object of THandle
+  Stream* {.inheritable} = object of Handle
     write_queue_size*      : int
-    alloc_cb*              : TAllocCb
-    read_cb*               : TReadCb
-    read2_cb*              : TRead2Cb
-    connect_req*           : ref TConnect
-    shutdown_req*          : ref TShutdown
-    io_watcher*            : TIo
+    alloc_cb*              : AllocCb
+    read_cb*               : ReadCb
+    read2_cb*              : Read2Cb
+    connect_req*           : ref Connect
+    shutdown_req*          : ref Shutdown
+    io_watcher*            : Io
     write_queue*           : array[2, pointer]
     write_completed_queue* : array[2, pointer]
-    connection_cb*         : TConnectionCb
+    connection_cb*         : ConnectionCb
     delayed_error*         : int
     accepted_fd*           : int
     select*                : pointer
 
-  TPipe* = object of TStream
+  Pipe* = object of Stream
     ipc*        : int
     pipe_fname* : cstring
 
-  TTreeEntry* = object
-    rbe_left*   : ref TTimer
-    rbe_right*  : ref TTimer
-    rbe_parent* : ref TTimer
+  TreeEntry* = object
+    rbe_left*   : ref Timer
+    rbe_right*  : ref Timer
+    rbe_parent* : ref Timer
     rbe_color*  : int
 
-  TTimer* = object of THandle
-    tree_entry*   : TTreeEntry
-    timer_cb*     : TTimerCb
+  Timer* = object of Handle
+    tree_entry*   : TreeEntry
+    timer_cb*     : TimerCb
     timeout*      : uint64
     repeat*       : uint64
     start_id*     : uint64
 
-  TTermios* = object
+  Termios* = object
 
-  TTty* = object of TStream
-    orig_termios* : TTermios
+  Tty* = object of Stream
+    orig_termios* : Termios
     mode*         : int
 
-  TCheck* = object
-    close_cb*     : TCloseCb
+  Check* = object
+    close_cb*     : CloseCb
     data*         : pointer
-    loop*         : ref TLoop
-    ttype*        : THandleType
+    loop*         : ref Loop
+    ttype*        : HandleType
     handle_queue* : array[2, pointer]
     flags*        : int
-    next_closing* : ref THandle
-    check_cb*     : TCheckCb
+    next_closing* : ref Handle
+    check_cb*     : CheckCb
     queue*        : array[2, pointer]
 
-  TPrepare* = object of THandle
-    prepare_cb*   : TPrepareCb
+  Prepare* = object of Handle
+    prepare_cb*   : PrepareCb
     queue*        : array[2, pointer]
 
-  TIdle* = object of THandle
-    idle_cb*      : TIdleCb
+  Idle* = object of Handle
+    idle_cb*      : IdleCb
     queue*        : array[2, pointer]
 
-  TPAsyncCb = proc (loop: ref TLoop, w: TPAsync, nevents: uint){.cdecl.}
-  TPAsync = object
-    cb         : TPAsyncCb
-    io_watcher : TIo
+  PAsyncCb = proc (loop: ref Loop, w: PAsync, nevents: uint){.cdecl.}
+  PAsync = object
+    cb         : PAsyncCb
+    io_watcher : Io
     wfd        : int
 
-  TAsync* = object of THandle
-    async_cb*     : TAsyncCb
+  Async* = object of Handle
+    async_cb*     : AsyncCb
     queue*        : array[2, pointer]
     pending*      : int
 
-  TPWork = object
-    work : proc (w: ref TPWork)
-    done : proc (w: ref TPWork; status: int)
-    loop : ref TLoop
+  PWork = object
+    work : proc (w: ref PWork)
+    done : proc (w: ref PWork; status: int)
+    loop : ref Loop
     wq   : array[2, pointer]
 
-  TWorkreq* = object
-    work* : proc (w: ref TWork) {.cdecl.}
-    done* : proc (w: ref TWork; status: int) {.cdecl.}
-    loop* : ref TLoop
+  Workreq* = object
+    work* : proc (w: ref Work) {.cdecl.}
+    done* : proc (w: ref Work; status: int) {.cdecl.}
+    loop* : ref Loop
     wq*   : array[2, pointer]
 
-  TWorkCb* = proc (req: ref TWork) {.cdecl.}
-  TWork* = object
+  WorkCb* = proc (req: ref Work) {.cdecl.}
+  Work* = object
     data*          : pointer
-    ttype*         : TReqType
+    ttype*         : ReqType
     active_queue*  : array[2, pointer]
-    loop*          : ref TLoop
-    work_cb*       : TWorkCb
-    after_work_cb* : TAfterWorkCb
-    work_req*      : TWorkreq
+    loop*          : ref Loop
+    work_cb*       : WorkCb
+    after_work_cb* : AfterWorkCb
+    work_req*      : Workreq
 
-  TGetaddrinfoCb* = proc (req: ref TGetaddrinfo; status: int; res: ref TAddrinfo) {.cdecl.}
-  TGetaddrinfo* = object
+  GetaddrinfoCb* = proc (req: ref Getaddrinfo; status: int; res: ref Addrinfo) {.cdecl.}
+  Getaddrinfo* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    loop*         : ref TLoop
-    work_req*     : TPWork
-    cb*           : TGetaddrinfoCb
-    hints*        : ref TAddrinfo
+    loop*         : ref Loop
+    work_req*     : PWork
+    cb*           : GetaddrinfoCb
+    hints*        : ref Addrinfo
     hostname*     : cstring
     service*      : cstring
-    res*          : ref TAddrinfo
+    res*          : ref Addrinfo
     retcode*      : int
 
-  TStdioFlags* {.size: sizeof(int).} = enum
+  StdioFlags*  = enum
     IGNORE = 0x00000000, CREATE_PIPE = 0x00000001, INHERIT_FD = 0x00000002,
     INHERIT_STREAM = 0x00000004, READABLE_PIPE = 0x00000010, WRITABLE_PIPE = 0x00000020
-  TDataU* = object
-    stream* : ref TStream
+  DataU* = object
+    stream* : ref Stream
     fd*     : int
 
-  TStdioContainer* = object
-    flags* : TStdioFlags
-    data*  : TDataU
+  StdioContainer* = object
+    flags* : StdioFlags
+    data*  : DataU
 
-  TProcessOptions* = object
-    exit_cb* : TExitCb
+  ProcessOptions* = object
+    exit_cb* : ExitCb
     file*    : cstring
     args*    : cstringArray
     env*     : cstringArray
     cwd*     : cstring
     flags*   : uint8
-    uid*     : TUid
-    gid*     : TGid
+    uid*     : Uid
+    gid*     : Gid
 
-  TProcessFlags* = enum
+  ProcessFlags* = enum
     PROCESS_SETUID = (1 shl 0), PROCESS_SETGID = (1 shl 1),
     PROCESS_WINDOWS_VERBATIM_ARGUMENTS = (1 shl 2), PROCESS_DETACHED = (1 shl 3),
     PROCESS_WINDOWS_HIDE = (1 shl 4)
 
-  TProcess* = object
-    close_cb*     : TCloseCb
+  Process* = object
+    close_cb*     : CloseCb
     data*         : pointer
-    loop*         : ref TLoop
-    ttype*        : THandleType
+    loop*         : ref Loop
+    ttype*        : HandleType
     handle_queue* : array[2, pointer]
     flags*        : int
-    next_closing* : ref THandle
-    exit_cb*      : TExitCb
+    next_closing* : ref Handle
+    exit_cb*      : ExitCb
     pid*          : int
     queue*        : array[2, pointer]
     errorno*      : int
 
-  TCpuTimes* = object
+  CpuTimes* = object
     user* : uint64
     nice* : uint64
     sys*  : uint64
     idle* : uint64
     irq*  : uint64
 
-  TCpuInfo* = object
+  CpuInfo* = object
     model*     : cstring
     speed*     : int
-    cpu_times* : TCpuTimes
+    cpu_times* : CpuTimes
 
-  TAddressU* = object
-    address4* : TSockaddr_in
-    address6* : TSockaddr_in6
+  AddressU* = object
+    address4* : Sockaddr_in
+    address6* : Sockaddr_in6
 
-  TNetmaskU* = object
-    netmask4* : TSockaddr_in
-    netmask6* : TSockaddr_in6
+  NetmaskU* = object
+    netmask4* : Sockaddr_in
+    netmask6* : Sockaddr_in6
 
-  TInterfaceAddress* = object
+  InterfaceAddress* = object
     name* : cstring
     is_internal* : int
-    address* : TAddressU
-    netmask* : TNetmaskU
+    address* : AddressU
+    netmask* : NetmaskU
 
-  TFsType* {.size: sizeof(int), pure.} = enum
+  FsType* {.pure.} = enum
     FS_UNKNOWN = - 1, FS_CUSTOM, FS_OPEN, FS_CLOSE, FS_READ, FS_WRITE, FS_SENDFILE, FS_STAT,
     FS_LSTAT, FS_FSTAT, FS_FTRUNCATE, FS_UTIME, FS_FUTIME, FS_CHMOD, FS_FCHMOD, FS_FSYNC,
     FS_FDATASYNC, FS_UNLINK, FS_RMDIR, FS_MKDIR, FS_RENAME, FS_READDIR, FS_LINK, FS_SYMLINK,
     FS_READLINK, FS_CHOWN, FS_FCHOWN
 
-  TFs* = object
+  Fs* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    fs_type*      : TFsType
-    loop*         : ref TLoop
-    cb*           : TFsCb
+    fs_type*      : FsType
+    loop*         : ref Loop
+    cb*           : FsCb
     result*       : int
     pptr*         : pointer
     path*         : cstring
-    errorno*      : TErrCode
-    statbuf*      : TStat
+    errorno*      : ErrCode
+    statbuf*      : Stat
     new_path*     : cstring
-    file*         : TFile
+    file*         : File
     flags*        : int
-    mode*         : TMode
+    mode*         : Mode
     buf*          : pointer
     len*          : int
-    off*          : TOff
-    uid*          : TUid
-    gid*          : TGid
+    off*          : Off
+    uid*          : Uid
+    gid*          : Gid
     atime*        : cdouble
     mtime*        : cdouble
-    work_req*     : TPWork
+    work_req*     : PWork
 
   EFsEvent* = enum
     RENAME = 1, CHANGE = 2
 
-  TFsEvent* = object of THandle
+  FsEvent* = object of Handle
     filename*       : cstring
-    cb*             : TFsEventCb
-    event_watcher*  : TIo
+    cb*             : FsEventCb
+    event_watcher*  : Io
     realpath*       : cstring
     realpath_len*   : int
     cf_flags*       : int
     cf_eventstream* : pointer
-    cf_cb*          : ref TAsync
+    cf_cb*          : ref Async
     cf_events*      : array[2, pointer]
-    cf_sem*         : TSem
-    cf_mutex*       : TMutex
+    cf_sem*         : Sem
+    cf_mutex*       : Mutex
 
-  TFsPoll* = object of THandle
+  FsPoll* = object of Handle
     poll_ctx*     : pointer
 
-  TFsEventFlags* = enum
+  FsEventFlags* = enum
     FS_EVENT_WATCH_ENTRY = 1, FS_EVENT_STAT = 2, FS_EVENT_RECURSIVE = 3
 
-  TSignal* = object of THandle
-    signal_cb*          : TSignalCb
+  Signal* = object of Handle
+    signal_cb*          : SignalCb
     signum*             : int
-    tree_entry*         : TTreeEntry
+    tree_entry*         : TreeEntry
     caught_signals*     : uint8
     dispatched_signals* : uint8
 
-  TAnyHandle* = object
-    async*    : TAsync
-    check*    : TCheck
+  AnyHandle* = object
+    async*    : Async
+    check*    : Check
     fs_event* : EFsEvent
-    fs_poll*  : TFsPoll
-    handle*   : THandle
-    idle*     : TIdle
-    pipe*     : TPipe
-    poll*     : TPoll
-    prepare*  : TPrepare
-    process*  : TProcess
-    stream*   : TStream
-    tcp*      : TTcp
-    timer*    : TTimer
-    tty*      : TTty
-    udp*      : TUdp
-    signal*   : TSignal
+    fs_poll*  : FsPoll
+    handle*   : Handle
+    idle*     : Idle
+    pipe*     : Pipe
+    poll*     : Poll
+    prepare*  : Prepare
+    process*  : Process
+    stream*   : Stream
+    tcp*      : Tcp
+    timer*    : Timer
+    tty*      : Tty
+    udp*      : Udp
+    signal*   : Signal
 
-  TAnyReq* = object
-    req*         : TReq
-    connect*     : TConnect
-    write*       : TWrite
-    shutdown*    : TShutdown
-    udp_send*    : TUdpSend
-    fs*          : TFs
-    work*        : TWork
-    getaddrinfo* : TGetaddrinfo
+  AnyReq* = object
+    req*         : Req
+    connect*     : Connect
+    write*       : Write
+    shutdown*    : Shutdown
+    udp_send*    : UdpSend
+    fs*          : Fs
+    work*        : Work
+    getaddrinfo* : Getaddrinfo
 
-  TTimers* = object
-    rbh_root* : ref TTimer
+  Timers* = object
+    rbh_root* : ref Timer
 
-  TLoop* = object
+  Loop* = object
     data*              : pointer
-    last_err*          : TErr
+    last_err*          : Err
     active_handles*    : uint8
     handle_queue*      : array[2, pointer]
     active_reqs*       : array[2, pointer]
@@ -379,320 +387,320 @@ type
     backend_fd*        : int
     pending_queue*     : array[2, pointer]
     watcher_queue*     : array[2, pointer]
-    watchers*          : ref ref TIo
+    watchers*          : ref ref Io
     nwatchers*         : uint8
     nfds*              : uint8
     wq*                : array[2, pointer]
-    wq_mutex*          : TMutex
-    wq_async*          : TAsync
-    closing_handles*   : ref THandle
+    wq_mutex*          : Mutex
+    wq_async*          : Async
+    closing_handles*   : ref Handle
     process_handles*   : array[2, array[1, pointer]]
     prepare_handles*   : array[2, pointer]
     check_handles*     : array[2, pointer]
     idle_handles*      : array[2, pointer]
     async_handles*     : array[2, pointer]
-    async_watcher*     : TPAsync
-    timer_handles*     : TTimers
+    async_watcher*     : PAsync
+    timer_handles*     : Timers
     time*              : uint64
     signal_pipefd*     : array[2, int]
-    signal_io_watcher* : TIo
-    child_watcher*     : TSignal
+    signal_io_watcher* : Io
+    child_watcher*     : Signal
     emfile_fd*         : int
     timer_counter*     : uint64
-    cf_thread*         : TThread
+    cf_thread*         : Thread
     cf_cb*             : pointer
     cf_loop*           : pointer
-    cf_mutex*          : TMutex
-    cf_sem*            : TSem
+    cf_mutex*          : Mutex
+    cf_sem*            : Sem
     cf_signals*        : array[2, pointer]
 
-  TCallback*     = proc () {.cdecl.}
-  TEntry*        = proc (arg: pointer) {.cdecl.}
-  TAllocCb*      = proc (handle: ref THandle; suggested_size: int): TBuf {.cdecl.}
-  TReadCb*       = proc (stream: ref TStream; nread: int; buf: TBuf) {.cdecl.}
-  TRead2Cb*      = proc (pipe: ref TPipe; nread: int; buf: TBuf; pending: THandleType) {.cdecl.}
-  TWriteCb*      = proc (req: ref TWrite; status: int) {.cdecl.}
-  TConnectCb*    = proc (req: ref TConnect; status: int) {.cdecl.}
-  TShutdownCb*   = proc (req: ref TShutdown; status: int) {.cdecl.}
-  TConnectionCb* = proc (server: ref TStream; status: int) {.cdecl.}
-  TCloseCb*      = proc (handle: ref THandle) {.cdecl.}
-  TPollCb*       = proc (handle: ref TPoll; status: int; events: int) {.cdecl.}
-  TTimerCb*      = proc (handle: ref TTimer; status: int){.cdecl.}
-  TAsyncCb*      = proc (handle: ref TAsync; status: int) {.cdecl.}
-  TPrepareCb*    = proc (handle: ref TPrepare; status: int) {.cdecl.}
-  TCheckCb*      = proc (handle: ref TCheck; status: int) {.cdecl.}
-  TIdleCb*       = proc (handle: ref TIdle; status: int) {.cdecl.}
-  TExitCb*       = proc (a2: ref TProcess; exit_status: int; term_signal: int) {.cdecl.}
-  TWalkCb*       = proc (handle: ref THandle; arg: pointer) {.cdecl.}
-  TFsCb*         = proc (req: ref TFs) {.cdecl.}
-  TAfterWorkCb*  = proc (req: ref TWork; status: int) {.cdecl.}
+  Callback*     = proc () {.cdecl.}
+  Entry*        = proc (arg: pointer) {.cdecl.}
+  AllocCb*      = proc (handle: ref Handle; suggested_size: int): Buf {.cdecl.}
+  ReadCb*       = proc (stream: ref Stream; nread: int; buf: Buf) {.cdecl.}
+  Read2Cb*      = proc (pipe: ref Pipe; nread: int; buf: Buf; pending: HandleType) {.cdecl.}
+  WriteCb*      = proc (req: ref Write; status: int) {.cdecl.}
+  ConnectCb*    = proc (req: ref Connect; status: int) {.cdecl.}
+  ShutdownCb*   = proc (req: ref Shutdown; status: int) {.cdecl.}
+  ConnectionCb* = proc (server: ref Stream; status: int) {.cdecl.}
+  CloseCb*      = proc (handle: ref Handle) {.cdecl.}
+  PollCb*       = proc (handle: ref Poll; status: int; events: int) {.cdecl.}
+  TimerCb*      = proc (handle: ref Timer; status: int){.cdecl.}
+  AsyncCb*      = proc (handle: ref Async; status: int) {.cdecl.}
+  PrepareCb*    = proc (handle: ref Prepare; status: int) {.cdecl.}
+  CheckCb*      = proc (handle: ref Check; status: int) {.cdecl.}
+  IdleCb*       = proc (handle: ref Idle; status: int) {.cdecl.}
+  ExitCb*       = proc (a2: ref Process; exit_status: int; term_signal: int) {.cdecl.}
+  WalkCb*       = proc (handle: ref Handle; arg: pointer) {.cdecl.}
+  FsCb*         = proc (req: ref Fs) {.cdecl.}
+  AfterWorkCb*  = proc (req: ref Work; status: int) {.cdecl.}
 
-  TTimespec* = object
+  Timespec* = object
     tv_sec*  : clong
     tv_nsec* : clong
 
-  TFsEventCb* = proc (handle: ref TFsEvent; filename: cstring; events: int; status: int) {.cdecl.}
-  TFsPollCb*  = proc (handle: ref TFsPoll; status: int; prev: ref TStat; curr: ref TStat) {.cdecl.}
-  TSignalCb*  = proc (handle: ref TSignal; signum: int) {.cdecl.}
+  FsEventCb* = proc (handle: ref FsEvent; filename: cstring; events: int; status: int) {.cdecl.}
+  FsPollCb*  = proc (handle: ref FsPoll; status: int; prev: ref Stat; curr: ref Stat) {.cdecl.}
+  SignalCb*  = proc (handle: ref Signal; signum: int) {.cdecl.}
 
-  TMembership* {.size: sizeof(int).} = enum
+  Membership* = enum
     LEAVE_GROUP = 0, JOIN_GROUP
 
-  TErr* = object
-    code*      : TErrCode
+  Err* = object
+    code*      : ErrCode
     sys_errno* : int
 
-  TReq* = object
+  Req* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
 
-  TWrite* = object
+  Write* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    cb*           : TWriteCb
-    send_handle*  : ref TStream
-    handle*       : ref TStream
+    cb*           : WriteCb
+    send_handle*  : ref Stream
+    handle*       : ref Stream
     queue*        : array[2, pointer]
     write_index*  : int
-    bufs*         : ref TBuf
+    bufs*         : ref Buf
     bufcnt*       : int
     error*        : int
-    bufsml*       : array[0..4 - 1, TBuf]
+    bufsml*       : array[0..4 - 1, Buf]
 
-  TTcp* = object of TStream
+  Tcp* = object of Stream
 
-  TConnect* = object
+  Connect* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    cb*           : TConnectCb
-    handle*       : ref TStream
+    cb*           : ConnectCb
+    handle*       : ref Stream
     queue*        : array[2, pointer]
 
-  TUdpFlags* = enum
+  UdpFlags* = enum
     UDP_IPV6ONLY = 1, UDP_PARTIAL = 2
 
-  TUdpSendCb* = proc (req: ref TUdpSend; status: int) {.cdecl.}
-  TUdpRecvCb* = proc (handle: ref TUdp; nread: int; buf: TBuf; adr: ref TSockaddr; flags: uint8) {.cdecl.}
+  UdpSendCb* = proc (req: ref UdpSend; status: int) {.cdecl.}
+  UdpRecvCb* = proc (handle: ref Udp; nread: int; buf: Buf; adr: ref Sockaddr; flags: uint8) {.cdecl.}
 
-  TUdp* = object of THandle
-    alloc_cb*              : TAllocCb
-    recv_cb*               : TUdpRecvCb
-    io_watcher*            : TIo
+  Udp* = object of Handle
+    alloc_cb*              : AllocCb
+    recv_cb*               : UdpRecvCb
+    io_watcher*            : Io
     write_queue*           : array[2, pointer]
     write_completed_queue* : array[2, pointer]
 
-  TUdpSend* = object
+  UdpSend* = object
     data*         : pointer
-    ttype*        : TReqType
+    ttype*        : ReqType
     active_queue* : array[2, pointer]
-    handle*       : ref TUdp
-    cb*           : TUdpSendCb
+    handle*       : ref Udp
+    cb*           : UdpSendCb
     queue*        : array[2, pointer]
-    adr*          : TSockaddr_in6
+    adr*          : Sockaddr_in6
     bufcnt*       : int
-    bufs*         : ref TBuf
+    bufs*         : ref Buf
     status*       : int
-    send_cb*      : TUdpSendCb
-    bufsml*       : array[4, TBuf]
+    send_cb*      : UdpSendCb
+    bufsml*       : array[4, Buf]
 
 {.pragma: libuv, cdecl, dynlib: LIBUV, importc: "uv_$1".}
 proc version* (): uint8 {.libuv.}
 proc version_string* (): cstring {.libuv.}
-proc loop_new* (): ref TLoop {.libuv.}
-proc loop_delete* (a2: ref TLoop) {.libuv.}
-proc default_loop* (): ref TLoop {.libuv.}
-proc run* (a2: ref TLoop; mode: TRunMode): int {.libuv.}
-proc stop* (a2: ref TLoop) {.libuv.}
-proc href* (a2: ref THandle) {.cdecl, dynlib: LIBUV, importc: "uv_ref".}
-proc unref* (a2: ref THandle) {.libuv.}
-proc has_ref* (a2: ref THandle): int {.libuv.}
-proc update_time* (a2: ref TLoop) {.libuv.}
-proc now* (a2: ref TLoop): uint64 {.libuv.}
-proc backend_fd* (a2: ref TLoop): int {.libuv.}
-proc backend_timeout* (a2: ref TLoop): int {.libuv.}
-proc last_error* (a2: ref TLoop): TErr {.libuv.}
-proc strerror* (err: TErr): cstring {.libuv.}
-proc err_name* (err: TErr): cstring {.libuv.}
-proc shutdown* (req: ref TShutdown; handle: ref TStream; cb: TShutdownCb): int {.libuv.}
-proc handle_size* (ttype: THandleType): int {.libuv.}
-proc req_size* (ttype: TReqType): int {.libuv.}
-proc is_active* (handle: ref THandle): int {.libuv.}
-proc walk* (loop: ref TLoop; walk_cb: TWalkCb; arg: pointer) {.libuv.}
-proc close* (handle: ref THandle; close_cb: TCloseCb) {.libuv.}
-proc buf_init* (base: cstring; len: uint): TBuf {.libuv.}
+proc loop_new* (): ref Loop {.libuv.}
+proc loop_delete* (a2: ref Loop) {.libuv.}
+proc default_loop* (): ref Loop {.libuv.}
+proc run* (a2: ref Loop; mode: RunMode): int {.libuv.}
+proc stop* (a2: ref Loop) {.libuv.}
+proc href* (a2: ref Handle) {.cdecl, dynlib: LIBUV, importc: "uv_ref".}
+proc unref* (a2: ref Handle) {.libuv.}
+proc has_ref* (a2: ref Handle): int {.libuv.}
+proc update_time* (a2: ref Loop) {.libuv.}
+proc now* (a2: ref Loop): uint64 {.libuv.}
+proc backend_fd* (a2: ref Loop): int {.libuv.}
+proc backend_timeout* (a2: ref Loop): int {.libuv.}
+proc last_error* (a2: ref Loop): Err {.libuv.}
+proc strerror* (err: Err): cstring {.libuv.}
+proc err_name* (err: Err): cstring {.libuv.}
+proc shutdown* (req: ref Shutdown; handle: ref Stream; cb: ShutdownCb): int {.libuv.}
+proc handle_size* (ttype: HandleType): int {.libuv.}
+proc req_size* (ttype: ReqType): int {.libuv.}
+proc is_active* (handle: ref Handle): int {.libuv.}
+proc walk* (loop: ref Loop; walk_cb: WalkCb; arg: pointer) {.libuv.}
+proc close* (handle: ref Handle; close_cb: CloseCb) {.libuv.}
+proc buf_init* (base: cstring; len: uint): Buf {.libuv.}
 proc strlcpy* (dst: cstring; src: cstring; size: int): int {.libuv.}
 proc strlcat* (dst: cstring; src: cstring; size: int): int {.libuv.}
-proc listen* (stream: ref TStream; backlog: int; cb: TConnectionCb): int {.libuv.}
-proc accept* (server: ref TStream; client: ref TStream): int {.libuv.}
-proc read_start* (a2: ref TStream; alloc_cb: TAllocCb; read_cb: TReadCb): int {.libuv.}
-proc read_stop* (a2: ref TStream): int {.libuv.}
-proc read2_start* (a2: ref TStream; alloc_cb: TAllocCb; read_cb: TRead2Cb): int {.libuv.}
-proc write* (req: ref TWrite; handle: ref TStream; bufs: ref TBuf; bufcnt: int; cb: TWriteCb): int {.libuv.}
-proc write2* (req: ref TWrite; handle: ref TStream; bufs: ref TBuf; bufcnt: int; send_handle: ref TStream; cb: TWriteCb): int {.libuv.}
-proc is_readable* (handle: ref TStream): int {.libuv.}
-proc is_writable* (handle: ref TStream): int {.libuv.}
-proc stream_set_blocking* (handle: ref TStream; blocking: int): int {.libuv.}
-proc is_closing* (handle: ref THandle): int {.libuv.}
-proc tcp_init* (a2: ref TLoop; handle: ref TTcp): int {.libuv.}
-proc tcp_open* (handle: ref TTcp; sock: TOsSock): int {.libuv.}
-proc tcp_nodelay* (handle: ref TTcp; enable: int): int {.libuv.}
-proc tcp_keepalive* (handle: ref TTcp; enable: int; delay: uint8): int {.libuv.}
-proc tcp_simultaneous_accepts* (handle: ref TTcp; enable: int): int {.libuv.}
-proc tcp_bind* (handle: ref TTcp; a3: TSockaddr_in): int {.libuv.}
-proc tcp_bind6* (handle: ref TTcp; a3: TSockaddr_in6): int {.libuv.}
-proc tcp_getsockname* (handle: ref TTcp; name: ref TSockaddr; namelen: ref int): int {.libuv.}
-proc tcp_getpeername* (handle: ref TTcp; name: ref TSockaddr; namelen: ref int): int {.libuv.}
-proc tcp_connect* (req: ref TConnect; handle: ref TTcp; address: TSockaddr_in; cb: TConnectCb): int {.libuv.}
-proc tcp_connect6* (req: ref TConnect; handle: ref TTcp; address: TSockaddr_in6; cb: TConnectCb): int {.libuv.}
-proc udp_init* (a2: ref TLoop; handle: ref TUdp): int {.libuv.}
-proc udp_open* (handle: ref TUdp; sock: TOsSock): int {.libuv.}
-proc udp_bind* (handle: ref TUdp; adr: TSockaddr_in; flags: uint8): int {.libuv.}
-proc udp_bind6* (handle: ref TUdp; adr: TSockaddr_in6; flags: uint8): int {.libuv.}
-proc udp_getsockname* (handle: ref TUdp; name: ref TSockaddr; namelen: ref int): int {.libuv.}
-proc udp_set_membership* (handle: ref TUdp; multicast_addr: cstring; interface_addr: cstring; membership: TMembership): int {.libuv.}
-proc udp_set_multicast_loop* (handle: ref TUdp; on: int): int {.libuv.}
-proc udp_set_multicast_ttl* (handle: ref TUdp; ttl: int): int {.libuv.}
-proc udp_set_broadcast* (handle: ref TUdp; on: int): int {.libuv.}
-proc udp_set_ttl* (handle: ref TUdp; ttl: int): int {.libuv.}
-proc udp_send* (req: ref TUdpSend; handle: ref TUdp; bufs: ref TBuf; bufcnt: int; adr: TSockaddr_in; send_cb: TUdpSendCb): int {.libuv.}
-proc udp_send6* (req: ref TUdpSend; handle: ref TUdp; bufs: ref TBuf; bufcnt: int; adr: TSockaddr_in6; send_cb: TUdpSendCb): int {.libuv.}
-proc udp_recv_start* (handle: ref TUdp; alloc_cb: TAllocCb; recv_cb: TUdpRecvCb): int {.libuv.}
-proc udp_recv_stop* (handle: ref TUdp): int {.libuv.}
-proc tty_init* (a2: ref TLoop; a3: ref TTty; fd: TFile; readable: int): int {.libuv.}
-proc tty_set_mode* (a2: ref TTty; mode: int): int {.libuv.}
+proc listen* (stream: ref Stream; backlog: int; cb: ConnectionCb): int {.libuv.}
+proc accept* (server: ref Stream; client: ref Stream): int {.libuv.}
+proc read_start* (a2: ref Stream; alloc_cb: AllocCb; read_cb: ReadCb): int {.libuv.}
+proc read_stop* (a2: ref Stream): int {.libuv.}
+proc read2_start* (a2: ref Stream; alloc_cb: AllocCb; read_cb: Read2Cb): int {.libuv.}
+proc write* (req: ref Write; handle: ref Stream; bufs: ref Buf; bufcnt: int; cb: WriteCb): int {.libuv.}
+proc write2* (req: ref Write; handle: ref Stream; bufs: ref Buf; bufcnt: int; send_handle: ref Stream; cb: WriteCb): int {.libuv.}
+proc is_readable* (handle: ref Stream): int {.libuv.}
+proc is_writable* (handle: ref Stream): int {.libuv.}
+proc stream_set_blocking* (handle: ref Stream; blocking: int): int {.libuv.}
+proc is_closing* (handle: ref Handle): int {.libuv.}
+proc tcp_init* (a2: ref Loop; handle: ref Tcp): int {.libuv.}
+proc tcp_open* (handle: ref Tcp; sock: OsSock): int {.libuv.}
+proc tcp_nodelay* (handle: ref Tcp; enable: int): int {.libuv.}
+proc tcp_keepalive* (handle: ref Tcp; enable: int; delay: uint8): int {.libuv.}
+proc tcp_simultaneous_accepts* (handle: ref Tcp; enable: int): int {.libuv.}
+proc tcp_bind* (handle: ref Tcp; a3: Sockaddr_in): int {.libuv.}
+proc tcp_bind6* (handle: ref Tcp; a3: Sockaddr_in6): int {.libuv.}
+proc tcp_getsockname* (handle: ref Tcp; name: ref Sockaddr; namelen: ref int): int {.libuv.}
+proc tcp_getpeername* (handle: ref Tcp; name: ref Sockaddr; namelen: ref int): int {.libuv.}
+proc tcp_connect* (req: ref Connect; handle: ref Tcp; address: Sockaddr_in; cb: ConnectCb): int {.libuv.}
+proc tcp_connect6* (req: ref Connect; handle: ref Tcp; address: Sockaddr_in6; cb: ConnectCb): int {.libuv.}
+proc udp_init* (a2: ref Loop; handle: ref Udp): int {.libuv.}
+proc udp_open* (handle: ref Udp; sock: OsSock): int {.libuv.}
+proc udp_bind* (handle: ref Udp; adr: Sockaddr_in; flags: uint8): int {.libuv.}
+proc udp_bind6* (handle: ref Udp; adr: Sockaddr_in6; flags: uint8): int {.libuv.}
+proc udp_getsockname* (handle: ref Udp; name: ref Sockaddr; namelen: ref int): int {.libuv.}
+proc udp_set_membership* (handle: ref Udp; multicast_addr: cstring; interface_addr: cstring; membership: Membership): int {.libuv.}
+proc udp_set_multicast_loop* (handle: ref Udp; on: int): int {.libuv.}
+proc udp_set_multicast_ttl* (handle: ref Udp; ttl: int): int {.libuv.}
+proc udp_set_broadcast* (handle: ref Udp; on: int): int {.libuv.}
+proc udp_set_ttl* (handle: ref Udp; ttl: int): int {.libuv.}
+proc udp_send* (req: ref UdpSend; handle: ref Udp; bufs: ref Buf; bufcnt: int; adr: Sockaddr_in; send_cb: UdpSendCb): int {.libuv.}
+proc udp_send6* (req: ref UdpSend; handle: ref Udp; bufs: ref Buf; bufcnt: int; adr: Sockaddr_in6; send_cb: UdpSendCb): int {.libuv.}
+proc udp_recv_start* (handle: ref Udp; alloc_cb: AllocCb; recv_cb: UdpRecvCb): int {.libuv.}
+proc udp_recv_stop* (handle: ref Udp): int {.libuv.}
+proc tty_init* (a2: ref Loop; a3: ref Tty; fd: File; readable: int): int {.libuv.}
+proc tty_set_mode* (a2: ref Tty; mode: int): int {.libuv.}
 proc tty_reset_mode* () {.libuv.}
-proc tty_get_winsize* (a2: ref TTty; width: ref int; height: ref int): int {.libuv.}
-proc guess_handle* (file: TFile): THandleType {.libuv.}
-proc pipe_init* (a2: ref TLoop; handle: ref TPipe; ipc: int): int {.libuv.}
-proc pipe_open* (a2: ref TPipe; file: TFile): int {.libuv.}
-proc pipe_bind* (handle: ref TPipe; name: cstring): int {.libuv.}
-proc pipe_connect* (req: ref TConnect; handle: ref TPipe; name: cstring; cb: TConnectCb) {.libuv.}
-proc pipe_pending_instances* (handle: ref TPipe; count: int) {.libuv.}
-proc poll_init* (loop: ref TLoop; handle: ref TPoll; fd: int): int {.libuv.}
-proc poll_init_socket* (loop: ref TLoop; handle: ref TPoll; socket: TOsSock): int {.libuv.}
-proc poll_start* (handle: ref TPoll; events: int; cb: TPollCb): int {.libuv.}
-proc poll_stop* (handle: ref TPoll): int {.libuv.}
-proc prepare_init* (a2: ref TLoop; prepare: ref TPrepare): int {.libuv.}
-proc prepare_start* (prepare: ref TPrepare; cb: TPrepareCb): int {.libuv.}
-proc prepare_stop* (prepare: ref TPrepare): int {.libuv.}
-proc check_init* (a2: ref TLoop; check: ref TCheck): int {.libuv.}
-proc check_start* (check: ref TCheck; cb: TCheckCb): int {.libuv.}
-proc check_stop* (check: ref TCheck): int {.libuv.}
-proc idle_init* (a2: ref TLoop; idle: ref TIdle): int {.libuv.}
-proc idle_start* (idle: ref TIdle; cb: TIdleCb): int {.libuv.}
-proc idle_stop* (idle: ref TIdle): int {.libuv.}
-proc async_init* (a2: ref TLoop; async: ref TAsync; async_cb: TAsyncCb): int {.libuv.}
-proc async_send* (async: ref TAsync): int {.libuv.}
-proc timer_init* (a2: ref TLoop; handle: ref TTimer): int {.libuv.}
-proc timer_start* (handle: ref TTimer; cb: TTimerCb; timeout: uint64; repeat: uint64): int {.libuv.}
-proc timer_stop* (handle: ref TTimer): int {.libuv.}
-proc timer_again* (handle: ref TTimer): int {.libuv.}
-proc timer_set_repeat* (handle: ref TTimer; repeat: uint64) {.libuv.}
-proc timer_get_repeat* (handle: ref TTimer): uint64 {.libuv.}
-proc getaddrinfo* (loop: ref TLoop; req: ref TGetaddrinfo; getaddrinfo_cb: TGetaddrinfoCb; node: cstring; service: cstring; hints: ref TAddrinfo): int {.libuv.}
-proc freeaddrinfo* (ai: ref TAddrinfo) {.libuv.}
-proc spawn* (a2: ref TLoop; a3: ref TProcess; options: TProcessOptions): int {.libuv.}
-proc process_kill* (a2: ref TProcess; signum: int): int {.libuv.}
-proc kill* (pid: int; signum: int): TErr {.libuv.}
-proc queue_work* (loop: ref TLoop; req: ref TWork; work_cb: TWorkCb; after_work_cb: TAfterWorkCb): int {.libuv.}
-proc cancel* (req: ref TReq): int {.libuv.}
+proc tty_get_winsize* (a2: ref Tty; width: ref int; height: ref int): int {.libuv.}
+proc guess_handle* (file: File): HandleType {.libuv.}
+proc pipe_init* (a2: ref Loop; handle: ref Pipe; ipc: int): int {.libuv.}
+proc pipe_open* (a2: ref Pipe; file: File): int {.libuv.}
+proc pipe_bind* (handle: ref Pipe; name: cstring): int {.libuv.}
+proc pipe_connect* (req: ref Connect; handle: ref Pipe; name: cstring; cb: ConnectCb) {.libuv.}
+proc pipe_pending_instances* (handle: ref Pipe; count: int) {.libuv.}
+proc poll_init* (loop: ref Loop; handle: ref Poll; fd: int): int {.libuv.}
+proc poll_init_socket* (loop: ref Loop; handle: ref Poll; socket: OsSock): int {.libuv.}
+proc poll_start* (handle: ref Poll; events: int; cb: PollCb): int {.libuv.}
+proc poll_stop* (handle: ref Poll): int {.libuv.}
+proc prepare_init* (a2: ref Loop; prepare: ref Prepare): int {.libuv.}
+proc prepare_start* (prepare: ref Prepare; cb: PrepareCb): int {.libuv.}
+proc prepare_stop* (prepare: ref Prepare): int {.libuv.}
+proc check_init* (a2: ref Loop; check: ref Check): int {.libuv.}
+proc check_start* (check: ref Check; cb: CheckCb): int {.libuv.}
+proc check_stop* (check: ref Check): int {.libuv.}
+proc idle_init* (a2: ref Loop; idle: ref Idle): int {.libuv.}
+proc idle_start* (idle: ref Idle; cb: IdleCb): int {.libuv.}
+proc idle_stop* (idle: ref Idle): int {.libuv.}
+proc async_init* (a2: ref Loop; async: ref Async; async_cb: AsyncCb): int {.libuv.}
+proc async_send* (async: ref Async): int {.libuv.}
+proc timer_init* (a2: ref Loop; handle: ref Timer): int {.libuv.}
+proc timer_start* (handle: ref Timer; cb: TimerCb; timeout: uint64; repeat: uint64): int {.libuv.}
+proc timer_stop* (handle: ref Timer): int {.libuv.}
+proc timer_again* (handle: ref Timer): int {.libuv.}
+proc timer_set_repeat* (handle: ref Timer; repeat: uint64) {.libuv.}
+proc timer_get_repeat* (handle: ref Timer): uint64 {.libuv.}
+proc getaddrinfo* (loop: ref Loop; req: ref Getaddrinfo; getaddrinfo_cb: GetaddrinfoCb; node: cstring; service: cstring; hints: ref Addrinfo): int {.libuv.}
+proc freeaddrinfo* (ai: ref Addrinfo) {.libuv.}
+proc spawn* (a2: ref Loop; a3: ref Process; options: ProcessOptions): int {.libuv.}
+proc process_kill* (a2: ref Process; signum: int): int {.libuv.}
+proc kill* (pid: int; signum: int): Err {.libuv.}
+proc queue_work* (loop: ref Loop; req: ref Work; work_cb: WorkCb; after_work_cb: AfterWorkCb): int {.libuv.}
+proc cancel* (req: ref Req): int {.libuv.}
 proc setup_args* (argc: int; argv: cstringArray): cstringArray {.libuv.}
-proc get_process_title* (buffer: cstring; size: int): TErr {.libuv.}
-proc set_process_title* (title: cstring): TErr {.libuv.}
-proc resident_set_memory* (rss: ref int): TErr {.libuv.}
-proc uptime* (uptime: ref cdouble): TErr {.libuv.}
-proc cpu_info* (cpu_infos: ref ref TCpuInfo; count: ref int): TErr {.libuv.}
-proc free_cpu_info* (cpu_infos: ref TCpuInfo; count: int) {.libuv.}
-proc interface_addresses* (addresses: ref ref TInterfaceAddress; count: ref int): TErr {.libuv.}
-proc free_interface_addresses* (addresses: ref TInterfaceAddress; count: int) {.libuv.}
-proc fs_req_cleanup* (req: ref TFs) {.libuv.}
-proc fs_close* (loop: ref TLoop; req: ref TFs; file: TFile; cb: TFsCb): int {.libuv.}
-proc fs_open* (loop: ref TLoop; req: ref TFs; path: cstring; flags: int; mode: int; cb: TFsCb): int {.libuv.}
-proc fs_read* (loop: ref TLoop; req: ref TFs; file: TFile; buf: pointer; length: int; offset: int64; cb: TFsCb): int {.libuv.}
-proc fs_unlink* (loop: ref TLoop; req: ref TFs; path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_write* (loop: ref TLoop; req: ref TFs; file: TFile; buf: pointer; length: int; offset: int64; cb: TFsCb): int {.libuv.}
-proc fs_mkdir* (loop: ref TLoop; req: ref TFs; path: cstring; mode: int; cb: TFsCb): int {.libuv.}
-proc fs_rmdir* (loop: ref TLoop; req: ref TFs; path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_readdir* (loop: ref TLoop; req: ref TFs; path: cstring; flags: int; cb: TFsCb): int {.libuv.}
-proc fs_stat* (loop: ref TLoop; req: ref TFs; path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_fstat* (loop: ref TLoop; req: ref TFs; file: TFile; cb: TFsCb): int {.libuv.}
-proc fs_rename* (loop: ref TLoop; req: ref TFs; path: cstring; new_path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_fsync* (loop: ref TLoop; req: ref TFs; file: TFile; cb: TFsCb): int {.libuv.}
-proc fs_fdatasync* (loop: ref TLoop; req: ref TFs; file: TFile; cb: TFsCb): int {.libuv.}
-proc fs_ftruncate* (loop: ref TLoop; req: ref TFs; file: TFile; offset: int64; cb: TFsCb): int {.libuv.}
-proc fs_sendfile* (loop: ref TLoop; req: ref TFs; out_fd: TFile; in_fd: TFile; in_offset: int64; length: int; cb: TFsCb): int {.libuv.}
-proc fs_chmod* (loop: ref TLoop; req: ref TFs; path: cstring; mode: int; cb: TFsCb): int {.libuv.}
-proc fs_utime* (loop: ref TLoop; req: ref TFs; path: cstring; atime: cdouble; mtime: cdouble; cb: TFsCb): int {.libuv.}
-proc fs_futime* (loop: ref TLoop; req: ref TFs; file: TFile; atime: cdouble; mtime: cdouble; cb: TFsCb): int {.libuv.}
-proc fs_lstat* (loop: ref TLoop; req: ref TFs; path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_link* (loop: ref TLoop; req: ref TFs; path: cstring; new_path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_symlink* (loop: ref TLoop; req: ref TFs; path: cstring; new_path: cstring; flags: int; cb: TFsCb): int {.libuv.}
-proc fs_readlink* (loop: ref TLoop; req: ref TFs; path: cstring; cb: TFsCb): int {.libuv.}
-proc fs_fchmod* (loop: ref TLoop; req: ref TFs; file: TFile; mode: int; cb: TFsCb): int {.libuv.}
-proc fs_chown* (loop: ref TLoop; req: ref TFs; path: cstring; uid: int; gid: int; cb: TFsCb): int {.libuv.}
-proc fs_fchown* (loop: ref TLoop; req: ref TFs; file: TFile; uid: int; gid: int; cb: TFsCb): int {.libuv.}
-proc fs_poll_init* (loop: ref TLoop; handle: ref TFsPoll): int {.libuv.}
-proc fs_poll_start* (handle: ref TFsPoll; poll_cb: TFsPollCb; path: cstring; interval: uint8): int {.libuv.}
-proc fs_poll_stop* (handle: ref TFsPoll): int {.libuv.}
-proc signal_init* (loop: ref TLoop; handle: ref TSignal): int {.libuv.}
-proc signal_start* (handle: ref TSignal; signal_cb: TSignalCb; signum: int): int {.libuv.}
-proc signal_stop* (handle: ref TSignal): int {.libuv.}
+proc get_process_title* (buffer: cstring; size: int): Err {.libuv.}
+proc set_process_title* (title: cstring): Err {.libuv.}
+proc resident_set_memory* (rss: ref int): Err {.libuv.}
+proc uptime* (uptime: ref cdouble): Err {.libuv.}
+proc cpu_info* (cpu_infos: ref ref CpuInfo; count: ref int): Err {.libuv.}
+proc free_cpu_info* (cpu_infos: ref CpuInfo; count: int) {.libuv.}
+proc interface_addresses* (addresses: ref ref InterfaceAddress; count: ref int): Err {.libuv.}
+proc free_interface_addresses* (addresses: ref InterfaceAddress; count: int) {.libuv.}
+proc fs_req_cleanup* (req: ref Fs) {.libuv.}
+proc fs_close* (loop: ref Loop; req: ref Fs; file: File; cb: FsCb): int {.libuv.}
+proc fs_open* (loop: ref Loop; req: ref Fs; path: cstring; flags: int; mode: int; cb: FsCb): int {.libuv.}
+proc fs_read* (loop: ref Loop; req: ref Fs; file: File; buf: pointer; length: int; offset: int64; cb: FsCb): int {.libuv.}
+proc fs_unlink* (loop: ref Loop; req: ref Fs; path: cstring; cb: FsCb): int {.libuv.}
+proc fs_write* (loop: ref Loop; req: ref Fs; file: File; buf: pointer; length: int; offset: int64; cb: FsCb): int {.libuv.}
+proc fs_mkdir* (loop: ref Loop; req: ref Fs; path: cstring; mode: int; cb: FsCb): int {.libuv.}
+proc fs_rmdir* (loop: ref Loop; req: ref Fs; path: cstring; cb: FsCb): int {.libuv.}
+proc fs_readdir* (loop: ref Loop; req: ref Fs; path: cstring; flags: int; cb: FsCb): int {.libuv.}
+proc fs_stat* (loop: ref Loop; req: ref Fs; path: cstring; cb: FsCb): int {.libuv.}
+proc fs_fstat* (loop: ref Loop; req: ref Fs; file: File; cb: FsCb): int {.libuv.}
+proc fs_rename* (loop: ref Loop; req: ref Fs; path: cstring; new_path: cstring; cb: FsCb): int {.libuv.}
+proc fs_fsync* (loop: ref Loop; req: ref Fs; file: File; cb: FsCb): int {.libuv.}
+proc fs_fdatasync* (loop: ref Loop; req: ref Fs; file: File; cb: FsCb): int {.libuv.}
+proc fs_ftruncate* (loop: ref Loop; req: ref Fs; file: File; offset: int64; cb: FsCb): int {.libuv.}
+proc fs_sendfile* (loop: ref Loop; req: ref Fs; out_fd: File; in_fd: File; in_offset: int64; length: int; cb: FsCb): int {.libuv.}
+proc fs_chmod* (loop: ref Loop; req: ref Fs; path: cstring; mode: int; cb: FsCb): int {.libuv.}
+proc fs_utime* (loop: ref Loop; req: ref Fs; path: cstring; atime: cdouble; mtime: cdouble; cb: FsCb): int {.libuv.}
+proc fs_futime* (loop: ref Loop; req: ref Fs; file: File; atime: cdouble; mtime: cdouble; cb: FsCb): int {.libuv.}
+proc fs_lstat* (loop: ref Loop; req: ref Fs; path: cstring; cb: FsCb): int {.libuv.}
+proc fs_link* (loop: ref Loop; req: ref Fs; path: cstring; new_path: cstring; cb: FsCb): int {.libuv.}
+proc fs_symlink* (loop: ref Loop; req: ref Fs; path: cstring; new_path: cstring; flags: int; cb: FsCb): int {.libuv.}
+proc fs_readlink* (loop: ref Loop; req: ref Fs; path: cstring; cb: FsCb): int {.libuv.}
+proc fs_fchmod* (loop: ref Loop; req: ref Fs; file: File; mode: int; cb: FsCb): int {.libuv.}
+proc fs_chown* (loop: ref Loop; req: ref Fs; path: cstring; uid: int; gid: int; cb: FsCb): int {.libuv.}
+proc fs_fchown* (loop: ref Loop; req: ref Fs; file: File; uid: int; gid: int; cb: FsCb): int {.libuv.}
+proc fs_poll_init* (loop: ref Loop; handle: ref FsPoll): int {.libuv.}
+proc fs_poll_start* (handle: ref FsPoll; poll_cb: FsPollCb; path: cstring; interval: uint8): int {.libuv.}
+proc fs_poll_stop* (handle: ref FsPoll): int {.libuv.}
+proc signal_init* (loop: ref Loop; handle: ref Signal): int {.libuv.}
+proc signal_start* (handle: ref Signal; signal_cb: SignalCb; signum: int): int {.libuv.}
+proc signal_stop* (handle: ref Signal): int {.libuv.}
 proc loadavg* (avg: array[0..3 - 1, cdouble]) {.libuv.}
-proc fs_event_init* (loop: ref TLoop; handle: ref TFsEvent; filename: cstring; cb: TFsEventCb; flags: int): int {.libuv.}
-proc ip4_addr* (ip: cstring; port: int): TSockaddrIn {.libuv.}
-proc ip6_addr* (ip: cstring; port: int): TSockaddrIn6 {.libuv.}
-proc ip4_name* (src: ref TSockaddrIn; dst: cstring; size: int): int {.libuv.}
-proc ip6_name* (src: ref TSockaddrIn6; dst: cstring; size: int): int {.libuv.}
-proc inet_ntop* (af: int; src: pointer; dst: cstring; size: int): TErr {.libuv.}
-proc inet_pton* (af: int; src: cstring; dst: pointer): TErr {.libuv.}
+proc fs_event_init* (loop: ref Loop; handle: ref FsEvent; filename: cstring; cb: FsEventCb; flags: int): int {.libuv.}
+proc ip4_addr* (ip: cstring; port: int): SockaddrIn {.libuv.}
+proc ip6_addr* (ip: cstring; port: int): SockaddrIn6 {.libuv.}
+proc ip4_name* (src: ref SockaddrIn; dst: cstring; size: int): int {.libuv.}
+proc ip6_name* (src: ref SockaddrIn6; dst: cstring; size: int): int {.libuv.}
+proc inet_ntop* (af: int; src: pointer; dst: cstring; size: int): Err {.libuv.}
+proc inet_pton* (af: int; src: cstring; dst: pointer): Err {.libuv.}
 proc exepath* (buffer: cstring; size: ref int): int {.libuv.}
-proc cwd* (buffer: cstring; size: int): TErr {.libuv.}
-proc chdir* (dir: cstring): TErr {.libuv.}
+proc cwd* (buffer: cstring; size: int): Err {.libuv.}
+proc chdir* (dir: cstring): Err {.libuv.}
 proc get_free_memory* (): uint64 {.libuv.}
 proc get_total_memory* (): uint64 {.libuv.}
 proc hrtime* (): uint64 {.libuv.}
 proc disable_stdio_inheritance* () {.libuv.}
-proc dlopen* (filename: cstring; lib: ref TLib): int {.libuv.}
-proc dlclose* (lib: ref TLib) {.libuv.}
-proc dlsym* (lib: ref TLib; name: cstring; p: ref pointer): int {.libuv.}
-proc dlerror* (lib: ref TLib): cstring {.libuv.}
-proc mutex_init* (handle: ref TMutex): int {.libuv.}
-proc mutex_destroy* (handle: ref TMutex) {.libuv.}
-proc mutex_lock* (handle: ref TMutex) {.libuv.}
-proc mutex_trylock* (handle: ref TMutex): int {.libuv.}
-proc mutex_unlock* (handle: ref TMutex) {.libuv.}
-proc rwlock_init* (rwlock: ref TRwlock): int {.libuv.}
-proc rwlock_destroy* (rwlock: ref TRwlock) {.libuv.}
-proc rwlock_rdlock* (rwlock: ref TRwlock) {.libuv.}
-proc rwlock_tryrdlock* (rwlock: ref TRwlock): int {.libuv.}
-proc rwlock_rdunlock* (rwlock: ref TRwlock) {.libuv.}
-proc rwlock_wrlock* (rwlock: ref TRwlock) {.libuv.}
-proc rwlock_trywrlock* (rwlock: ref TRwlock): int {.libuv.}
-proc rwlock_wrunlock* (rwlock: ref TRwlock) {.libuv.}
-proc sem_init* (sem: ref TSem; value: uint8): int {.libuv.}
-proc sem_destroy* (sem: ref TSem) {.libuv.}
-proc sem_post* (sem: ref TSem) {.libuv.}
-proc sem_wait* (sem: ref TSem) {.libuv.}
-proc sem_trywait* (sem: ref TSem): int {.libuv.}
-proc cond_init* (cond: ref TCond): int {.libuv.}
-proc cond_destroy* (cond: ref TCond) {.libuv.}
-proc cond_signal* (cond: ref TCond) {.libuv.}
-proc cond_broadcast* (cond: ref TCond) {.libuv.}
-proc cond_wait* (cond: ref TCond; mutex: ref TMutex) {.libuv.}
-proc cond_timedwait* (cond: ref TCond; mutex: ref TMutex; timeout: uint64): int {.libuv.}
-proc barrier_init* (barrier: ref TBarrier; count: uint8): int {.libuv.}
-proc barrier_destroy* (barrier: ref TBarrier) {.libuv.}
-proc barrier_wait* (barrier: ref TBarrier) {.libuv.}
-proc once* (guard: ref TOnce; callback: TCallback) {.libuv.}
-proc thread_create* (tid: ref TThread; entry: TEntry; arg: pointer): int {.libuv.}
+proc dlopen* (filename: cstring; lib: ref Lib): int {.libuv.}
+proc dlclose* (lib: ref Lib) {.libuv.}
+proc dlsym* (lib: ref Lib; name: cstring; p: ref pointer): int {.libuv.}
+proc dlerror* (lib: ref Lib): cstring {.libuv.}
+proc mutex_init* (handle: ref Mutex): int {.libuv.}
+proc mutex_destroy* (handle: ref Mutex) {.libuv.}
+proc mutex_lock* (handle: ref Mutex) {.libuv.}
+proc mutex_trylock* (handle: ref Mutex): int {.libuv.}
+proc mutex_unlock* (handle: ref Mutex) {.libuv.}
+proc rwlock_init* (rwlock: ref Rwlock): int {.libuv.}
+proc rwlock_destroy* (rwlock: ref Rwlock) {.libuv.}
+proc rwlock_rdlock* (rwlock: ref Rwlock) {.libuv.}
+proc rwlock_tryrdlock* (rwlock: ref Rwlock): int {.libuv.}
+proc rwlock_rdunlock* (rwlock: ref Rwlock) {.libuv.}
+proc rwlock_wrlock* (rwlock: ref Rwlock) {.libuv.}
+proc rwlock_trywrlock* (rwlock: ref Rwlock): int {.libuv.}
+proc rwlock_wrunlock* (rwlock: ref Rwlock) {.libuv.}
+proc sem_init* (sem: ref Sem; value: uint8): int {.libuv.}
+proc sem_destroy* (sem: ref Sem) {.libuv.}
+proc sem_post* (sem: ref Sem) {.libuv.}
+proc sem_wait* (sem: ref Sem) {.libuv.}
+proc sem_trywait* (sem: ref Sem): int {.libuv.}
+proc cond_init* (cond: ref Cond): int {.libuv.}
+proc cond_destroy* (cond: ref Cond) {.libuv.}
+proc cond_signal* (cond: ref Cond) {.libuv.}
+proc cond_broadcast* (cond: ref Cond) {.libuv.}
+proc cond_wait* (cond: ref Cond; mutex: ref Mutex) {.libuv.}
+proc cond_timedwait* (cond: ref Cond; mutex: ref Mutex; timeout: uint64): int {.libuv.}
+proc barrier_init* (barrier: ref Barrier; count: uint8): int {.libuv.}
+proc barrier_destroy* (barrier: ref Barrier) {.libuv.}
+proc barrier_wait* (barrier: ref Barrier) {.libuv.}
+proc once* (guard: ref Once; callback: Callback) {.libuv.}
+proc thread_create* (tid: ref Thread; entry: Entry; arg: pointer): int {.libuv.}
 proc thread_self* (): culong {.libuv.}
-proc thread_join* (tid: ref TThread): int {.libuv.}
+proc thread_join* (tid: ref Thread): int {.libuv.}
 
 proc check* (err: int) =
-  assert err == 0, "Response was: " & $TErrCode(err)
+  assert err == 0, "Response was: " & $ErrCode(err)
 
 proc run_default_loop* () =
   var err = run(default_loop(), RUN_DEFAULT)
@@ -702,11 +710,11 @@ when isMainModule:
   # Raw test:
   {.pragma: libuv_raw, cdecl, dynlib: LIBUV, importc.}
   proc uv_default_loop(): pointer {.libuv_raw.}
-  proc uv_run(loop: pointer; mode: TRunMode): int {.libuv_raw.}
+  proc uv_run(loop: pointer; mode: RunMode): int {.libuv_raw.}
   proc uv_timer_init(a2: pointer; handle: pointer): int {.libuv_raw.}
-  proc uv_timer_start(timer: pointer; cb: proc (h: ref TTimer, status: int){.cdecl.}; timeout: int64; repeat: int64): int {.libuv_raw.}
-  var h = handle_size(TIMER).alloc
-  proc test_timer(handle: ref TTimer; status: int) {.cdecl.} =
+  proc uv_timer_start(timer: pointer; cb: proc (h: ref Timer, status: int){.cdecl.}; timeout: int64; repeat: int64): int {.libuv_raw.}
+  var h = sizeof(Timer).alloc
+  proc test_timer(handle: ref Timer; status: int) {.cdecl.} =
     echo "Hello World"
   check uv_timer_init(uv_default_loop(), h)
   check uv_timer_start(h, test_timer, 2000, 0)
