@@ -25,8 +25,13 @@ http_parser:
 libuv:
 	$(MAKE) -C deps/libuv libuv.${SOEXT}  CC=${CC} CFLAGS=${CFLAGS}
 
+lthread:
+	cd deps/lthread; cmake .
+	$(MAKE) -C deps/lthread
+
 clean:
 	$(MAKE) -C deps/http-parser clean
 	$(MAKE) -C deps/libuv clean
+	$(MAKE) -C deps/lthread clean
 
-.PHONY: all http_parser libuv clean
+.PHONY: all http_parser libuv clean lthread

@@ -4,3 +4,6 @@
 [submodule "deps/libuv"]
 	path = deps/libuv
 	url = https://github.com/joyent/libuv.git
+[submodule "deps/lthread"]
+	path = deps/lthread
+	url = https://github.com/halayli/lthread.git

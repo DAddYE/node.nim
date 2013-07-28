@@ -16,62 +16,62 @@ const LIBUV =
   else:                  "./deps/libuv/libuv.so"
 
 type
-  AddrInfo    = TAddrinfo
-  Sockaddr    = TSockaddr
-  SockaddrIn  = TSockaddrIn
+  AddrInfo = TAddrinfo
+  Sockaddr = TSockaddr
+  SockaddrIn = TSockaddrIn
   SockaddrIn6 = TSockaddrIn6
   Mode = TMode
-  Off  = TOff
+  Off = TOff
   Stat = TStat
 
   Buf* = object
-    base* : cstring
-    len* : int
+    base*: cstring
+    len*: int
 
-  File*    = int
-  OsSock*  = int
-  Once*    = object
-  Thread*  = object
-  Mutex*   = object
-  Rwlock*  = object
-  Sem*     = object
-  Cond*    = object
+  File* = int
+  OsSock* = int
+  Once* = object
+  Thread* = object
+  Mutex* = object
+  Rwlock* = object
+  Sem* = object
+  Cond* = object
 
   Barrier* = object
-    n*          : uint8
-    count*      : uint8
-    mutex*      : Mutex
-    turnstile1* : Sem
-    turnstile2* : Sem
+    n*: uint8
+    count*: uint8
+    mutex*: Mutex
+    turnstile1*: Sem
+    turnstile2*: Sem
 
   Gid* = object
   Uid* = object
 
   Lib* = object
-    handle* : pointer
-    errmsg* : cstring
+    handle*: pointer
+    errmsg*: cstring
 
   IoCb = proc (loop: ref Loop; w: ref Io; events: uint8) {.cdecl.}
   Io = object
-    cb            : IoCb
-    pending_queue : array[2, pointer]
-    watcher_queue : array[2, pointer]
-    pevents       : uint8
-    events        : uint8
-    fd            : int
-    rcount        : int
-    wcount        : int
+    cb: IoCb
+    pending_queue: array[2, pointer]
+    watcher_queue: array[2, pointer]
+    pevents: uint8
+    events: uint8
+    fd: int
+    rcount: int
+    wcount: int
 
   Poll* = object
-    close_cb*     : CloseCb
-    data*         : pointer
-    loop*         : ref Loop
-    ttype*        : HandleType
-    handle_queue* : array[2, pointer]
-    flags*        : int
-    next_closing* : ref Handle
-    poll_cb*      : PollCb
-    io_watcher*   : Io
+    close_cb*: CloseCb
+    data*: pointer
+    loop*: ref Loop
+    ttype*: HandleType
+    handle_queue*: array[2, pointer]
+    flags*: int
+    next_closing*: ref Handle
+    poll_cb*: PollCb
+    io_watcher*: Io
 
   PollEvent* {.pure.} = enum
     READABLE = 1, WRITABLE = 2
@@ -95,151 +95,151 @@ type
   ReqType* {.pure.} = enum
     UNKNOWN_REQ = 0, REQ, CONNECT, WRITE, SHUTDOWN, UDP_SEND, FS, WORK, GETADDRINFO, REQ_TYPE_MAX
 
-  RunMode*  = enum
+  RunMode* = enum
     RUN_DEFAULT = 0, RUN_ONCE, RUN_NOWAIT
 
   Shutdown* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    handle*       : ref Stream
-    cb*           : ShutdownCb
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    handle*: ref Stream
+    cb*: ShutdownCb
 
 
   Handle* {.inheritable.} = object
-    close_cb*     : CloseCb
-    data*         : pointer
-    loop*         : ref Loop
-    ttype*        : HandleType
-    handle_queue* : array[2, pointer]
-    flags*        : int
-    next_closing* : ref Handle
+    close_cb*: CloseCb
+    data*: pointer
+    loop*: ref Loop
+    ttype*: HandleType
+    handle_queue*: array[2, pointer]
+    flags*: int
+    next_closing*: ref Handle
 
 
   Stream* {.inheritable} = object of Handle
-    write_queue_size*      : int
-    alloc_cb*              : AllocCb
-    read_cb*               : ReadCb
-    read2_cb*              : Read2Cb
-    connect_req*           : ref Connect
-    shutdown_req*          : ref Shutdown
-    io_watcher*            : Io
-    write_queue*           : array[2, pointer]
-    write_completed_queue* : array[2, pointer]
-    connection_cb*         : ConnectionCb
-    delayed_error*         : int
-    accepted_fd*           : int
-    select*                : pointer
+    write_queue_size*: int
+    alloc_cb*: AllocCb
+    read_cb*: ReadCb
+    read2_cb*: Read2Cb
+    connect_req*: ref Connect
+    shutdown_req*: ref Shutdown
+    io_watcher*: Io
+    write_queue*: array[2, pointer]
+    write_completed_queue*: array[2, pointer]
+    connection_cb*: ConnectionCb
+    delayed_error*: int
+    accepted_fd*: int
+    select*: pointer
 
   Pipe* = object of Stream
-    ipc*        : int
-    pipe_fname* : cstring
+    ipc*: int
+    pipe_fname*: cstring
 
   TreeEntry* = object
-    rbe_left*   : ref Timer
-    rbe_right*  : ref Timer
-    rbe_parent* : ref Timer
-    rbe_color*  : int
+    rbe_left*: ref Timer
+    rbe_right*: ref Timer
+    rbe_parent*: ref Timer
+    rbe_color*: int
 
   Timer* = object of Handle
-    tree_entry*   : TreeEntry
-    timer_cb*     : TimerCb
-    timeout*      : uint64
-    repeat*       : uint64
-    start_id*     : uint64
+    tree_entry*: TreeEntry
+    timer_cb*: TimerCb
+    timeout*: uint64
+    repeat*: uint64
+    start_id*: uint64
 
   Termios* = object
 
   Tty* = object of Stream
-    orig_termios* : Termios
-    mode*         : int
+    orig_termios*: Termios
+    mode*: int
 
   Check* = object
-    close_cb*     : CloseCb
-    data*         : pointer
-    loop*         : ref Loop
-    ttype*        : HandleType
-    handle_queue* : array[2, pointer]
-    flags*        : int
-    next_closing* : ref Handle
-    check_cb*     : CheckCb
-    queue*        : array[2, pointer]
+    close_cb*: CloseCb
+    data*: pointer
+    loop*: ref Loop
+    ttype*: HandleType
+    handle_queue*: array[2, pointer]
+    flags*: int
+    next_closing*: ref Handle
+    check_cb*: CheckCb
+    queue*: array[2, pointer]
 
   Prepare* = object of Handle
-    prepare_cb*   : PrepareCb
-    queue*        : array[2, pointer]
+    prepare_cb*: PrepareCb
+    queue*: array[2, pointer]
 
   Idle* = object of Handle
-    idle_cb*      : IdleCb
-    queue*        : array[2, pointer]
+    idle_cb*: IdleCb
+    queue*: array[2, pointer]
 
   PAsyncCb = proc (loop: ref Loop, w: PAsync, nevents: uint){.cdecl.}
   PAsync = object
-    cb         : PAsyncCb
-    io_watcher : Io
-    wfd        : int
+    cb: PAsyncCb
+    io_watcher: Io
+    wfd: int
 
   Async* = object of Handle
-    async_cb*     : AsyncCb
-    queue*        : array[2, pointer]
-    pending*      : int
+    async_cb*: AsyncCb
+    queue*: array[2, pointer]
+    pending*: int
 
   PWork = object
-    work : proc (w: ref PWork)
-    done : proc (w: ref PWork; status: int)
-    loop : ref Loop
-    wq   : array[2, pointer]
+    work: proc (w: ref PWork)
+    done: proc (w: ref PWork; status: int)
+    loop: ref Loop
+    wq: array[2, pointer]
 
   Workreq* = object
-    work* : proc (w: ref Work) {.cdecl.}
-    done* : proc (w: ref Work; status: int) {.cdecl.}
-    loop* : ref Loop
-    wq*   : array[2, pointer]
+    work*: proc (w: ref Work) {.cdecl.}
+    done*: proc (w: ref Work; status: int) {.cdecl.}
+    loop*: ref Loop
+    wq*: array[2, pointer]
 
   WorkCb* = proc (req: ref Work) {.cdecl.}
   Work* = object
-    data*          : pointer
-    ttype*         : ReqType
-    active_queue*  : array[2, pointer]
-    loop*          : ref Loop
-    work_cb*       : WorkCb
-    after_work_cb* : AfterWorkCb
-    work_req*      : Workreq
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    loop*: ref Loop
+    work_cb*: WorkCb
+    after_work_cb*: AfterWorkCb
+    work_req*: Workreq
 
   GetaddrinfoCb* = proc (req: ref Getaddrinfo; status: int; res: ref Addrinfo) {.cdecl.}
   Getaddrinfo* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    loop*         : ref Loop
-    work_req*     : PWork
-    cb*           : GetaddrinfoCb
-    hints*        : ref Addrinfo
-    hostname*     : cstring
-    service*      : cstring
-    res*          : ref Addrinfo
-    retcode*      : int
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    loop*: ref Loop
+    work_req*: PWork
+    cb*: GetaddrinfoCb
+    hints*: ref Addrinfo
+    hostname*: cstring
+    service*: cstring
+    res*: ref Addrinfo
+    retcode*: int
 
-  StdioFlags*  = enum
+  StdioFlags* = enum
     IGNORE = 0x00000000, CREATE_PIPE = 0x00000001, INHERIT_FD = 0x00000002,
     INHERIT_STREAM = 0x00000004, READABLE_PIPE = 0x00000010, WRITABLE_PIPE = 0x00000020
   DataU* = object
-    stream* : ref Stream
-    fd*     : int
+    stream*: ref Stream
+    fd*: int
 
   StdioContainer* = object
-    flags* : StdioFlags
-    data*  : DataU
+    flags*: StdioFlags
+    data*: DataU
 
   ProcessOptions* = object
-    exit_cb* : ExitCb
-    file*    : cstring
-    args*    : cstringArray
-    env*     : cstringArray
-    cwd*     : cstring
-    flags*   : uint8
-    uid*     : Uid
-    gid*     : Gid
+    exit_cb*: ExitCb
+    file*: cstring
+    args*: cstringArray
+    env*: cstringArray
+    cwd*: cstring
+    flags*: uint8
+    uid*: Uid
+    gid*: Gid
 
   ProcessFlags* = enum
     PROCESS_SETUID = (1 shl 0), PROCESS_SETGID = (1 shl 1),
@@ -247,43 +247,43 @@ type
     PROCESS_WINDOWS_HIDE = (1 shl 4)
 
   Process* = object
-    close_cb*     : CloseCb
-    data*         : pointer
-    loop*         : ref Loop
-    ttype*        : HandleType
-    handle_queue* : array[2, pointer]
-    flags*        : int
-    next_closing* : ref Handle
-    exit_cb*      : ExitCb
-    pid*          : int
-    queue*        : array[2, pointer]
-    errorno*      : int
+    close_cb*: CloseCb
+    data*: pointer
+    loop*: ref Loop
+    ttype*: HandleType
+    handle_queue*: array[2, pointer]
+    flags*: int
+    next_closing*: ref Handle
+    exit_cb*: ExitCb
+    pid*: int
+    queue*: array[2, pointer]
+    errorno*: int
 
   CpuTimes* = object
-    user* : uint64
-    nice* : uint64
-    sys*  : uint64
-    idle* : uint64
-    irq*  : uint64
+    user*: uint64
+    nice*: uint64
+    sys*: uint64
+    idle*: uint64
+    irq*: uint64
 
   CpuInfo* = object
-    model*     : cstring
-    speed*     : int
-    cpu_times* : CpuTimes
+    model*: cstring
+    speed*: int
+    cpu_times*: CpuTimes
 
   AddressU* = object
-    address4* : Sockaddr_in
-    address6* : Sockaddr_in6
+    address4*: Sockaddr_in
+    address6*: Sockaddr_in6
 
   NetmaskU* = object
-    netmask4* : Sockaddr_in
-    netmask6* : Sockaddr_in6
+    netmask4*: Sockaddr_in
+    netmask6*: Sockaddr_in6
 
   InterfaceAddress* = object
-    name* : cstring
-    is_internal* : int
-    address* : AddressU
-    netmask* : NetmaskU
+    name*: cstring
+    is_internal*: int
+    address*: AddressU
+    netmask*: NetmaskU
 
   FsType* {.pure.} = enum
     FS_UNKNOWN = - 1, FS_CUSTOM, FS_OPEN, FS_CLOSE, FS_READ, FS_WRITE, FS_SENDFILE, FS_STAT,
@@ -292,192 +292,192 @@ type
     FS_READLINK, FS_CHOWN, FS_FCHOWN
 
   Fs* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    fs_type*      : FsType
-    loop*         : ref Loop
-    cb*           : FsCb
-    result*       : int
-    pptr*         : pointer
-    path*         : cstring
-    errorno*      : ErrCode
-    statbuf*      : Stat
-    new_path*     : cstring
-    file*         : File
-    flags*        : int
-    mode*         : Mode
-    buf*          : pointer
-    len*          : int
-    off*          : Off
-    uid*          : Uid
-    gid*          : Gid
-    atime*        : cdouble
-    mtime*        : cdouble
-    work_req*     : PWork
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    fs_type*: FsType
+    loop*: ref Loop
+    cb*: FsCb
+    result*: int
+    pptr*: pointer
+    path*: cstring
+    errorno*: ErrCode
+    statbuf*: Stat
+    new_path*: cstring
+    file*: File
+    flags*: int
+    mode*: Mode
+    buf*: pointer
+    len*: int
+    off*: Off
+    uid*: Uid
+    gid*: Gid
+    atime*: cdouble
+    mtime*: cdouble
+    work_req*: PWork
 
   EFsEvent* = enum
     RENAME = 1, CHANGE = 2
 
   FsEvent* = object of Handle
-    filename*       : cstring
-    cb*             : FsEventCb
-    event_watcher*  : Io
-    realpath*       : cstring
-    realpath_len*   : int
-    cf_flags*       : int
-    cf_eventstream* : pointer
-    cf_cb*          : ref Async
-    cf_events*      : array[2, pointer]
-    cf_sem*         : Sem
-    cf_mutex*       : Mutex
+    filename*: cstring
+    cb*: FsEventCb
+    event_watcher*: Io
+    realpath*: cstring
+    realpath_len*: int
+    cf_flags*: int
+    cf_eventstream*: pointer
+    cf_cb*: ref Async
+    cf_events*: array[2, pointer]
+    cf_sem*: Sem
+    cf_mutex*: Mutex
 
   FsPoll* = object of Handle
-    poll_ctx*     : pointer
+    poll_ctx*: pointer
 
   FsEventFlags* = enum
     FS_EVENT_WATCH_ENTRY = 1, FS_EVENT_STAT = 2, FS_EVENT_RECURSIVE = 3
 
   Signal* = object of Handle
-    signal_cb*          : SignalCb
-    signum*             : int
-    tree_entry*         : TreeEntry
-    caught_signals*     : uint8
-    dispatched_signals* : uint8
+    signal_cb*: SignalCb
+    signum*: int
+    tree_entry*: TreeEntry
+    caught_signals*: uint8
+    dispatched_signals*: uint8
 
   AnyHandle* = object
-    async*    : Async
-    check*    : Check
-    fs_event* : EFsEvent
-    fs_poll*  : FsPoll
-    handle*   : Handle
-    idle*     : Idle
-    pipe*     : Pipe
-    poll*     : Poll
-    prepare*  : Prepare
-    process*  : Process
-    stream*   : Stream
-    tcp*      : Tcp
-    timer*    : Timer
-    tty*      : Tty
-    udp*      : Udp
-    signal*   : Signal
+    async*: Async
+    check*: Check
+    fs_event*: EFsEvent
+    fs_poll*: FsPoll
+    handle*: Handle
+    idle*: Idle
+    pipe*: Pipe
+    poll*: Poll
+    prepare*: Prepare
+    process*: Process
+    stream*: Stream
+    tcp*: Tcp
+    timer*: Timer
+    tty*: Tty
+    udp*: Udp
+    signal*: Signal
 
   AnyReq* = object
-    req*         : Req
-    connect*     : Connect
-    write*       : Write
-    shutdown*    : Shutdown
-    udp_send*    : UdpSend
-    fs*          : Fs
-    work*        : Work
-    getaddrinfo* : Getaddrinfo
+    req*: Req
+    connect*: Connect
+    write*: Write
+    shutdown*: Shutdown
+    udp_send*: UdpSend
+    fs*: Fs
+    work*: Work
+    getaddrinfo*: Getaddrinfo
 
   Timers* = object
-    rbh_root* : ref Timer
+    rbh_root*: ref Timer
 
   Loop* = object
-    data*              : pointer
-    last_err*          : Err
-    active_handles*    : uint8
-    handle_queue*      : array[2, pointer]
-    active_reqs*       : array[2, pointer]
-    stop_flag*         : uint8
-    flags*             : culong
-    backend_fd*        : int
-    pending_queue*     : array[2, pointer]
-    watcher_queue*     : array[2, pointer]
-    watchers*          : ref ref Io
-    nwatchers*         : uint8
-    nfds*              : uint8
-    wq*                : array[2, pointer]
-    wq_mutex*          : Mutex
-    wq_async*          : Async
-    closing_handles*   : ref Handle
-    process_handles*   : array[2, array[1, pointer]]
-    prepare_handles*   : array[2, pointer]
-    check_handles*     : array[2, pointer]
-    idle_handles*      : array[2, pointer]
-    async_handles*     : array[2, pointer]
-    async_watcher*     : PAsync
-    timer_handles*     : Timers
-    time*              : uint64
-    signal_pipefd*     : array[2, int]
-    signal_io_watcher* : Io
-    child_watcher*     : Signal
-    emfile_fd*         : int
-    timer_counter*     : uint64
-    cf_thread*         : Thread
-    cf_cb*             : pointer
-    cf_loop*           : pointer
-    cf_mutex*          : Mutex
-    cf_sem*            : Sem
-    cf_signals*        : array[2, pointer]
+    data*: pointer
+    last_err*: Err
+    active_handles*: uint8
+    handle_queue*: array[2, pointer]
+    active_reqs*: array[2, pointer]
+    stop_flag*: uint8
+    flags*: culong
+    backend_fd*: int
+    pending_queue*: array[2, pointer]
+    watcher_queue*: array[2, pointer]
+    watchers*: ref ref Io
+    nwatchers*: uint8
+    nfds*: uint8
+    wq*: array[2, pointer]
+    wq_mutex*: Mutex
+    wq_async*: Async
+    closing_handles*: ref Handle
+    process_handles*: array[2, array[1, pointer]]
+    prepare_handles*: array[2, pointer]
+    check_handles*: array[2, pointer]
+    idle_handles*: array[2, pointer]
+    async_handles*: array[2, pointer]
+    async_watcher*: PAsync
+    timer_handles*: Timers
+    time*: uint64
+    signal_pipefd*: array[2, int]
+    signal_io_watcher*: Io
+    child_watcher*: Signal
+    emfile_fd*: int
+    timer_counter*: uint64
+    cf_thread*: Thread
+    cf_cb*: pointer
+    cf_loop*: pointer
+    cf_mutex*: Mutex
+    cf_sem*: Sem
+    cf_signals*: array[2, pointer]
 
-  Callback*     = proc () {.cdecl.}
-  Entry*        = proc (arg: pointer) {.cdecl.}
-  AllocCb*      = proc (handle: ref Handle; suggested_size: int): Buf {.cdecl.}
-  ReadCb*       = proc (stream: ref Stream; nread: int; buf: Buf) {.cdecl.}
-  Read2Cb*      = proc (pipe: ref Pipe; nread: int; buf: Buf; pending: HandleType) {.cdecl.}
-  WriteCb*      = proc (req: ref Write; status: int) {.cdecl.}
-  ConnectCb*    = proc (req: ref Connect; status: int) {.cdecl.}
-  ShutdownCb*   = proc (req: ref Shutdown; status: int) {.cdecl.}
+  Callback* = proc () {.cdecl.}
+  Entry* = proc (arg: pointer) {.cdecl.}
+  AllocCb* = proc (handle: ref Handle; suggested_size: int): Buf {.cdecl.}
+  ReadCb* = proc (stream: ref Stream; nread: int; buf: Buf) {.cdecl.}
+  Read2Cb* = proc (pipe: ref Pipe; nread: int; buf: Buf; pending: HandleType) {.cdecl.}
+  WriteCb* = proc (req: ref Write; status: int) {.cdecl.}
+  ConnectCb* = proc (req: ref Connect; status: int) {.cdecl.}
+  ShutdownCb* = proc (req: ref Shutdown; status: int) {.cdecl.}
   ConnectionCb* = proc (server: ref Stream; status: int) {.cdecl.}
-  CloseCb*      = proc (handle: ref Handle) {.cdecl.}
-  PollCb*       = proc (handle: ref Poll; status: int; events: int) {.cdecl.}
-  TimerCb*      = proc (handle: ref Timer; status: int){.cdecl.}
-  AsyncCb*      = proc (handle: ref Async; status: int) {.cdecl.}
-  PrepareCb*    = proc (handle: ref Prepare; status: int) {.cdecl.}
-  CheckCb*      = proc (handle: ref Check; status: int) {.cdecl.}
-  IdleCb*       = proc (handle: ref Idle; status: int) {.cdecl.}
-  ExitCb*       = proc (a2: ref Process; exit_status: int; term_signal: int) {.cdecl.}
-  WalkCb*       = proc (handle: ref Handle; arg: pointer) {.cdecl.}
-  FsCb*         = proc (req: ref Fs) {.cdecl.}
-  AfterWorkCb*  = proc (req: ref Work; status: int) {.cdecl.}
+  CloseCb* = proc (handle: ref Handle) {.cdecl.}
+  PollCb* = proc (handle: ref Poll; status: int; events: int) {.cdecl.}
+  TimerCb* = proc (handle: ref Timer; status: int){.cdecl.}
+  AsyncCb* = proc (handle: ref Async; status: int) {.cdecl.}
+  PrepareCb* = proc (handle: ref Prepare; status: int) {.cdecl.}
+  CheckCb* = proc (handle: ref Check; status: int) {.cdecl.}
+  IdleCb* = proc (handle: ref Idle; status: int) {.cdecl.}
+  ExitCb* = proc (a2: ref Process; exit_status: int; term_signal: int) {.cdecl.}
+  WalkCb* = proc (handle: ref Handle; arg: pointer) {.cdecl.}
+  FsCb* = proc (req: ref Fs) {.cdecl.}
+  AfterWorkCb* = proc (req: ref Work; status: int) {.cdecl.}
 
   Timespec* = object
-    tv_sec*  : clong
-    tv_nsec* : clong
+    tv_sec*: clong
+    tv_nsec*: clong
 
   FsEventCb* = proc (handle: ref FsEvent; filename: cstring; events: int; status: int) {.cdecl.}
-  FsPollCb*  = proc (handle: ref FsPoll; status: int; prev: ref Stat; curr: ref Stat) {.cdecl.}
-  SignalCb*  = proc (handle: ref Signal; signum: int) {.cdecl.}
+  FsPollCb* = proc (handle: ref FsPoll; status: int; prev: ref Stat; curr: ref Stat) {.cdecl.}
+  SignalCb* = proc (handle: ref Signal; signum: int) {.cdecl.}
 
   Membership* = enum
     LEAVE_GROUP = 0, JOIN_GROUP
 
   Err* = object
-    code*      : ErrCode
-    sys_errno* : int
+    code*: ErrCode
+    sys_errno*: int
 
   Req* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
 
   Write* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    cb*           : WriteCb
-    send_handle*  : ref Stream
-    handle*       : ref Stream
-    queue*        : array[2, pointer]
-    write_index*  : int
-    bufs*         : ref Buf
-    bufcnt*       : int
-    error*        : int
-    bufsml*       : array[0..4 - 1, Buf]
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    cb*: WriteCb
+    send_handle*: ref Stream
+    handle*: ref Stream
+    queue*: array[2, pointer]
+    write_index*: int
+    bufs*: ref Buf
+    bufcnt*: int
+    error*: int
+    bufsml*: array[0..4 - 1, Buf]
 
   Tcp* = object of Stream
 
   Connect* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    cb*           : ConnectCb
-    handle*       : ref Stream
-    queue*        : array[2, pointer]
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    cb*: ConnectCb
+    handle*: ref Stream
+    queue*: array[2, pointer]
 
   UdpFlags* = enum
     UDP_IPV6ONLY = 1, UDP_PARTIAL = 2
@@ -486,25 +486,25 @@ type
   UdpRecvCb* = proc (handle: ref Udp; nread: int; buf: Buf; adr: ref Sockaddr; flags: uint8) {.cdecl.}
 
   Udp* = object of Handle
-    alloc_cb*              : AllocCb
-    recv_cb*               : UdpRecvCb
-    io_watcher*            : Io
-    write_queue*           : array[2, pointer]
-    write_completed_queue* : array[2, pointer]
+    alloc_cb*: AllocCb
+    recv_cb*: UdpRecvCb
+    io_watcher*: Io
+    write_queue*: array[2, pointer]
+    write_completed_queue*: array[2, pointer]
 
   UdpSend* = object
-    data*         : pointer
-    ttype*        : ReqType
-    active_queue* : array[2, pointer]
-    handle*       : ref Udp
-    cb*           : UdpSendCb
-    queue*        : array[2, pointer]
-    adr*          : Sockaddr_in6
-    bufcnt*       : int
-    bufs*         : ref Buf
-    status*       : int
-    send_cb*      : UdpSendCb
-    bufsml*       : array[4, Buf]
+    data*: pointer
+    ttype*: ReqType
+    active_queue*: array[2, pointer]
+    handle*: ref Udp
+    cb*: UdpSendCb
+    queue*: array[2, pointer]
+    adr*: Sockaddr_in6
+    bufcnt*: int
+    bufs*: ref Buf
+    status*: int
+    send_cb*: UdpSendCb
+    bufsml*: array[4, Buf]
 
 {.pragma: libuv, cdecl, dynlib: LIBUV, importc: "uv_$1".}
 proc version* (): uint8 {.libuv.}
