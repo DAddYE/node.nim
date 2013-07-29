@@ -25,7 +25,7 @@ Then I started prototyping an [http server](/http_server.nim). To do that I used
 
 Seems close to C. Here some purely _fun_ indications:
 
-The [C version](/examples/webserver.c) of our http server (which has less overhead) perform:
+The [C version](/example/webserver.c) of our http server (which has less overhead) perform:
 
 ```
 Concurrency Level:      100
