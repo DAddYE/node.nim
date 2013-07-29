@@ -1,6 +1,14 @@
 ## What is this?
 
-No idea yet but, more than an usable lib this is close to a lab.
+The idea behind is to add to the **awesome** [Nimrod](https://github.com/Araq/Nimrod) a new layer
+to deal with asynchronous calls, coroutines and threads.
+
+Indeed, Nimrod contains already an async module (for sockets) and a great support for threads.
+
+But I want to do something different more high-level and also learn a bit more how to use this
+amazing language.
+
+Obviously I need to thank @araq for two main reason: 1) Nimrod 2) The infinite patience with me!
 
 ## Modules
 
