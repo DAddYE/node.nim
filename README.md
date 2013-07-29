@@ -10,14 +10,14 @@ Right now I wrote **c wrappers** for:
 - [http-parser 2.1](https://github.com/joyent/http-parser/tree/v2.1)
 - [lthread](https://github.com/halayli/lthread)
 
-Then I started prototyping an http server. To do that I used a similar approach to node with an
-[event emitter](/blob/master/events.nim).
+Then I started prototyping an [http server](/http_server.nim). To do that I used a similar approach to node with an
+[event emitter](/events.nim), you can find more on the [http parser](/http.nim)
 
 ## How fast it is?
 
 Seems close to C. Here some purely _fun_ indications:
 
-The [C version](/blob/master/examples/webserver.c) of our http server (which has less overhead) perform:
+The [C version](/examples/webserver.c) of our http server (which has less overhead) perform:
 
 ```
 Concurrency Level:      100
