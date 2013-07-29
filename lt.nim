@@ -14,7 +14,6 @@ type
   LThreadFunc* = proc (a2: pointer){.cdecl.}
 
 {.push header: "../deps/lthread/src/lthread.h", importc.}
-proc lthread_summary* (): cstring
 proc lthread_create* (new_lt: var ptr LThread, a3: LThreadFunc, arg: pointer): cint
 proc lthread_cancel* (lt: ptr LThread)
 proc lthread_run* ()
@@ -22,7 +21,7 @@ proc lthread_join* (lt: ptr LThread, p: ref pointer, timeout: uint64): cint
 proc lthread_detach* ()
 proc lthread_sleep* (msecs: uint64)
 proc lthread_wakeup* (lt: ref LThread)
-proc lthread_cond_create* (c: ref ref LThreadCond): cint
+proc lthread_cond_create* (c: var ref LThreadCond): cint
 proc lthread_cond_wait* (c: ref LThreadCond, timeout: uint64): cint
 proc lthread_cond_signal* (c: ref LThreadCond)
 proc lthread_cond_broadcast* (c: ref LThreadCond)
@@ -62,8 +61,14 @@ proc lthread_compute_end* ()
 when isMainModule:
   import pure/times
   block:
-    proc printf(formatstr: cstring) {.importc: "printf", varargs, header: "<stdio.h>".}
+    type TProc = proc (){.cdecl.}
+    proc printf (formatstr: cstring) {.importc: "printf", varargs, header: "<stdio.h>".}
+    proc cb () {.cdecl.} =
+      echo "hello from cb"
+
     proc a (x: pointer){.cdecl.} =
+      var fn = cast[TProc](x)
+      fn()
       echo "I am in a"
       lthread_detach()
       for i in 1..3:
@@ -99,7 +104,7 @@ when isMainModule:
       echo "d is done joining on c."
 
     var t: ptr LThread
-    discard lthread_create(t, a, nil)
+    discard lthread_create(t, a, cb)
     discard lthread_create(t, b, nil)
     discard lthread_create(t, d, nil)
     lthread_run()
