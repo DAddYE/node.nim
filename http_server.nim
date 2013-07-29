@@ -98,8 +98,9 @@ proc bindTo6* (t: ref Tcp, ip: string, port: int) =
 
 proc listen* (srv: Server, port: int, address: string = "0.0.0.0") =
   if loop.tcpInit(srv) > 0: raiseError()
+  if srv.tcpKeepAlive(1, 60) > 0: raiseError()
   if address =~ re(ip6regex): srv.bindTo6(address, port) else: srv.bindTo(address, port)
-  if srv.listen(511, onConnect) > 0: raiseError()
+  if srv.listen(1000, onConnect) > 0: raiseError()
 
 proc createServer* (cb: RequestListener): Server =
   Server(callback: cb)
