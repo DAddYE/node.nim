@@ -21,7 +21,7 @@ Right now I wrote **c wrappers** for:
 Then I started prototyping an [http server](/http_server.nim). To do that I used a similar approach to node with an
 [event emitter](/events.nim), you can find more on the [http parser](/http.nim)
 
-## How fast it is?
+## How fast is it?
 
 Seems close to C. Here some purely _fun_ indications:
 
